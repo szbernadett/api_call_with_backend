@@ -3,12 +3,10 @@ let router = express.Router();
 let axios = require("axios");
 
 
-// Utility functions (from your React app)
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
 const createCities = require("../utils/cityFactory");
 const SearchInfo = require("../models/SearchInfo");
 
-// GET: Search for city data
 router.get("/search", async (req, res) => { 
   const cityName = req.query.cityName;
   const categories = JSON.parse(decodeURIComponent(req.query.categories));
@@ -25,11 +23,9 @@ router.get("/search", async (req, res) => {
     const cityDataResponse = await axios.get(citySearchInfo.url, options);
     const cityData = cityDataResponse.data;
 
-    // Process city data
     const initialCities = createCities(cityData.data);
     const uniqueCities = getUniqueCities(initialCities);
 
-    // Fetch additional data
     const citiesWithTemp = await fetchCitiesWithTemperature(uniqueCities);
     const citiesWithAttractions = await fetchCitiesWithAttractions(citiesWithTemp, categories);
     const citiesWithForecast = await fetchCitiesWithForecast(citiesWithAttractions);
@@ -41,7 +37,6 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// Fetch temperatures
 const fetchCitiesWithTemperature = async (cities) => {
   return Promise.all(
     cities.map(async (city) => {
@@ -80,7 +75,6 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
   );
 };
 
-// Fetch forecasts
 const fetchCitiesWithForecast = async (cities) => {
   return Promise.all(
     cities.map(async (city) => {
@@ -99,7 +93,6 @@ const fetchCitiesWithForecast = async (cities) => {
   );
 };
 
-// Removes duplicate cities by ID
 function getUniqueCities(cities) {
   return Array.from(new Map(cities.map((city) => [city.id, city])).values());
 }
