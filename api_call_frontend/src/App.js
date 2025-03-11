@@ -36,7 +36,7 @@ export default function App() {
     const encodedCategories = encodeURIComponent(JSON.stringify(selectedCategories));
 
     try {
-      const response = await fetch(`http://localhost:5000/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`);
+      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`);
       const result = await response.json();
 
       if (!response.ok) {
