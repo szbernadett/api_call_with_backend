@@ -6,35 +6,67 @@ let axios = require("axios");
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
 const createCities = require("../utils/cityFactory");
 const SearchInfo = require("../models/SearchInfo");
+const { allAttractionCategories } = require("../models/AttractionCategory");
+const { City, CityEntity } = require("../models/City");
+
 
 router.get("/search", async (req, res) => { 
   const cityName = req.query.cityName;
   const categories = JSON.parse(decodeURIComponent(req.query.categories));
 
-  if (!cityName) {
-    return res.status(400).json({ error: "Please enter a city name to search" });
-  }
 
   try {
-    const citySearchInfo = getCitySearchInfo(cityName);
-    const options = {
-      headers: citySearchInfo.headers
-    };
-    const cityDataResponse = await axios.get(citySearchInfo.url, options);
-    const cityData = cityDataResponse.data;
+    let dbCities = await City.find({ searchTerm: cityName });
+    if(dbCities.length > 0){
+      console.log("Updating cities fetched from database");
+      const existingCities = dbCities.map(city => {
+        const cityEntity = city.toCityEntity();
+        return cityEntity;
+      });
+      const citeisWithUpdatedTemperature = await fetchCitiesWithTemperature(existingCities);
+      const citiesWithUpdatedForecast = await fetchCitiesWithForecast(citeisWithUpdatedTemperature);
+      const citiesWithFilteredAttractions = citiesWithUpdatedForecast.map(city => {
+        city.populateAttractionsForDisplay(categories);
+        return city;
+      });
+      res.json({cities: citiesWithFilteredAttractions});
+    
+    } else {
+      console.log("Creating new city entities from API data");
+      const citySearchInfo = getCitySearchInfo(cityName);
+      const options = {
+        headers: citySearchInfo.headers
+      };
+      const cityDataResponse = await axios.get(citySearchInfo.url, options);
+      const cityData = cityDataResponse.data;
 
-    const initialCities = createCities(cityData.data);
-    const uniqueCities = getUniqueCities(initialCities);
+      const initialCities = createCities(cityData.data, cityName);
+      const uniqueCities = getUniqueCities(initialCities);
 
-    const citiesWithTemp = await fetchCitiesWithTemperature(uniqueCities);
-    const citiesWithAttractions = await fetchCitiesWithAttractions(citiesWithTemp, categories);
-    const citiesWithForecast = await fetchCitiesWithForecast(citiesWithAttractions);
-
-    res.json({ cities: citiesWithForecast });
+      const citiesWithTemp = await fetchCitiesWithTemperature(uniqueCities);
+      const citiesWithAttractions = await fetchCitiesWithAttractions(citiesWithTemp, categories);
+      const citiesWithForecast = await fetchCitiesWithForecast(citiesWithAttractions);
+      
+      await City.insertMany(
+        citiesWithForecast.map(city => ({
+          searchTerm: city.searchTerm,
+          name: city.name,
+          countryName: city.countryName,
+          population: city.population,
+          latitude: city.latitude,
+          longitude: city.longitude,
+          attractions: city.attractions
+        }))
+      );
+  
+      res.json({ cities: citiesWithForecast });
+    }
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ error: error.message });
-  }
+ 
+  } 
+
 });
 
 const fetchCitiesWithTemperature = async (cities) => {
@@ -61,12 +93,13 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
   return Promise.all(
     cities.map(async (city) => {
       try {
-        const attractionsSearchInfo = getAttractionSearchInfo(city.latitude, city.longitude, selectedCategories);
+        const attractionsSearchInfo = getAttractionSearchInfo(city.latitude, city.longitude, allAttractionCategories);
         const options = {
           headers: attractionsSearchInfo.headers
         };
         const response = await axios.get(attractionsSearchInfo.url, options);
-        city.populateAttractions(response.data, selectedCategories);
+        city.attractions=response.data;
+        city.populateAttractionsForDisplay(selectedCategories);
       } catch (error) {
         console.warn("Error fetching attractions data:", error.message);
       }
@@ -83,7 +116,7 @@ const fetchCitiesWithForecast = async (cities) => {
         const options = {
           headers: forecastSearchInfo.headers
         };
-        const response = await axios.get(forecastSearchInfo.url, options);
+        const response = await axios.get(forecastSearchInfo.url, options);       
         city.extractForecastData(response.data);
       } catch (error) {
         console.warn("Error fetching forecast data:", error.message);

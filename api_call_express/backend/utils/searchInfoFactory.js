@@ -1,5 +1,5 @@
 const SearchInfo = require("../models/SearchInfo");
-const City = require("../models/City");
+const { CityEntity } = require("../models/City");
 
 const rapidKey = process.env.RAPID_API_KEY;
 
@@ -33,13 +33,9 @@ const getCurrentTempSearchInfo = (latitude, longitude) => {
   }
 };
 
-const getAttractionSearchInfo = (
-  latitude,
-  longitude,
-  selectedCategories
-) => {
-  const radius = City.attracionSearchRadius; // distance from the point of search (city) in metres
-  const limit = City.resultsPerAttractionCat * selectedCategories.length; // retrieve max 500 results for each category
+const getAttractionSearchInfo = (latitude, longitude, selectedCategories) => {
+  const radius = CityEntity.attracionSearchRadius; // distance from the point of search (city) in metres
+  const limit = CityEntity.resultsPerAttractionCat * selectedCategories.length; // retrieve max 500 results for each category
   const preparedCategories = selectedCategories.join(",");
   if (latitude && longitude && selectedCategories) {
     return new SearchInfo(

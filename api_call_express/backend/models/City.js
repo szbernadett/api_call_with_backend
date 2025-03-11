@@ -1,54 +1,59 @@
 const { ReverseAttractionCategory } = require("./AttractionCategory");
+const { allAttractionCategories } = require("./AttractionCategory");
+const mongoose = require("mongoose");
 
- class City {
-  static attractionPerCatLimit = 5; // how many attractions per category to collect in the pouplateAttractions function
-  static resultsPerAttractionCat = 500; // used to determine max how many results to ask for in api call
-  static attracionSearchRadius = 5000; // how far the search for tourist attracitons should extend from the city in metres
+// Traditional JavaScript Class for Dynamic Processing
+class CityEntity {
+  static attractionPerCatLimit = 5;
+  static resultsPerAttractionCat = 500;
+  static attracionSearchRadius = 5000;
 
   constructor(
+    searchTerm,
     name,
     countryName,
     population,
     latitude,
     longitude,
     currentTemp = 0,
-    attractions = {},
+    attractions = [],
+    displayAttractions = {},
     forecast = {}
   ) {
+    this.searchTerm = searchTerm;
     this.name = name;
     this.countryName = countryName;
     this.population = population;
     this.latitude = latitude;
     this.longitude = longitude;
     this.currentTemp = currentTemp;
-    this.attractions = attractions; // populated after api call
-    this.forecast = forecast; // populated after api call
-    this.id = name + latitude; // generated id to use when React needs it to dynamically display an array of cities
+    this.attractions = attractions;
+    this.displayAttractions = displayAttractions;
+    this.forecast = forecast;
+    this.id = name + latitude; // Unique ID for frontend
   }
-  // Collects the first 5 attraction names for each selected category
-  populateAttractions(apiData, selectedCategories) {
-    if (apiData?.length > 0 && selectedCategories?.length > 0) {
+
+  // Filter attractions for display based on selected categories
+  populateAttractionsForDisplay(selectedCategories) {
+    if (this.attractions.length > 0 && selectedCategories?.length > 0) {
       let catsToMatch = [...selectedCategories];
-      // tested on GeoJSON format returned from the Placed API
-      apiData.forEach((feature) => {
+
+      this.attractions.forEach((feature) => {
         if (feature.name) {
           if (catsToMatch.length > 0) {
             const matchingCat = catsToMatch.find((cat) =>
               feature.kinds.split(",").includes(cat)
             );
+
             if (matchingCat) {
-              let catToKey = ReverseAttractionCategory[matchingCat]; // get the key name from the AtrractionCategory based on the value
-              this.attractions[catToKey] = this.attractions[catToKey] || []; // if there isn't an array for this category yet, assign it an empty array
-              if (
-                this.attractions[catToKey].length < // if there are less than the maximum amount of attractions per category in the array
-                City.attractionPerCatLimit
-              ) {
-                this.attractions[catToKey].push(feature.name); // add the attraction name to the array
+              let catToKey = ReverseAttractionCategory[matchingCat];
+              this.displayAttractions[catToKey] =
+                this.displayAttractions[catToKey] || [];
+
+              if (this.displayAttractions[catToKey].length < CityEntity.attractionPerCatLimit) {
+                this.displayAttractions[catToKey].push(feature.name);
               } else {
-                catsToMatch = catsToMatch.filter(
-                  // if the max limit has been reached, remove the category from the array so that it will not be matched further
-                  (item) => item !== matchingCat
-                );
+                catsToMatch = catsToMatch.filter((item) => item !== matchingCat);
               }
             }
           }
@@ -57,12 +62,55 @@ const { ReverseAttractionCategory } = require("./AttractionCategory");
     }
   }
 
+  // 📅 Extract weather forecast from API response
   extractForecastData(apiData) {
     this.forecast = apiData.forecast.forecastday.map((fDay) => ({
-      date: fDay.date, // The date in format yyyy-mm-dd
-      avgTemp: fDay.day.avgtemp_c, // The average temperature
+      date: fDay.date,
+      avgTemp: fDay.day.avgtemp_c,
     }));
   }
 }
 
-module.exports = City;
+// 🏗 Mongoose Schema for Persistent Storage
+const CitySchema = new mongoose.Schema(
+  {
+    searchTerm: { type: String, required: true },
+    name: { type: String, required: true },
+    countryName: { type: String, required: true },
+    population: { type: Number, required: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    attractions: { type: mongoose.Schema.Types.Mixed, default: [] },
+  },
+  { timestamps: true }
+);
+
+// Convert Mongoose City to `CityEntity`
+CitySchema.methods.toCityEntity = function () {
+  return new CityEntity(
+    this.searchTerm,
+    this.name,
+    this.countryName,
+    this.population,
+    this.latitude,
+    this.longitude,
+    0, // Default currentTemp
+    this.attractions,
+    {}, // Empty displayAttractions, to be populated dynamically
+    {} // Empty forecast, to be populated dynamically
+  );
+};
+
+CitySchema.methods.getDisplayAttractions = function (selectedCategories) {
+  const cityEntity = this.toCityEntity();
+  cityEntity.populateAttractionsForDisplay(selectedCategories);
+  return cityEntity.displayAttractions;
+};
+
+// Ensure virtuals are included in JSON responses
+CitySchema.set("toJSON", { virtuals: true });
+CitySchema.set("toObject", { virtuals: true });
+
+const City = mongoose.model("City", CitySchema);
+
+module.exports = { City, CityEntity };

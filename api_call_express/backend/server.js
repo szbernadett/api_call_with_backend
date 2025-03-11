@@ -4,12 +4,18 @@ let path = require("path");
 require("dotenv").config();
 const cors = require("cors"); // Import cors
 const PORT = process.env.PORT || 5000;
+const mongoose = require("mongoose");
+const mongoURI = process.env.MONGO_URI;
 
 let server = express();
 server.use(express.json());
 server.use(cors({origin: "http://localhost:3000", // Allow frontend
   methods: ["GET", "POST", "PUT", "DELETE"], // Allow these methods
   credentials: true,})); // Enable CORS for all requests
+
+  mongoose.connect(mongoURI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
 let indexRouter = require("./routes/index");
 let usersRouter = require("./routes/users");

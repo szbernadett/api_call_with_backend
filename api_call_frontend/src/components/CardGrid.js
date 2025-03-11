@@ -3,6 +3,7 @@ import { Card, CardContent, Typography, Grid2 } from "@mui/material";
 import ForecastChart from "./ForecastChart";
 
 export default function CardGrid({ cities }) {
+  console.log(cities);
   return (
     <Grid2
       container
@@ -55,9 +56,9 @@ export default function CardGrid({ cities }) {
                 component="div"
               >
                 <strong>Attractions:</strong>
-                {city.attractions &&
-                Object.keys(city.attractions).length > 0 ? (
-                  Object.entries(city.attractions).map(([category, values]) => (
+                {city.displayAttractions &&
+                Object.keys(city.displayAttractions).length > 0 ? (
+                  Object.entries(city.displayAttractions).map(([category, values]) => (
                     <Typography
                       variant="body2"
                       color="text.secondary"

@@ -13,4 +13,6 @@ export const ReverseAttractionCategory = Object.freeze(
   )
 );
 
+export const allAttractionCategories = Object.values(AttractionCategory);
+
 // module.exports = {AttractionCategory};

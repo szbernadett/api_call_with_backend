@@ -1,7 +1,7 @@
-const City = require("../models/City");
+const { CityEntity } = require("../models/City");
 
 // creates inital city objects after the first api call to use in further code
-function createCities(data) {
+function createCities(data, searchTerm) {
   if (!Array.isArray(data)) {
     console.error("Expected data to be an array, but got:", data);
     return [];
@@ -9,7 +9,8 @@ function createCities(data) {
 
   return data.map(
     (cityData) =>
-      new City(
+      new CityEntity(
+        searchTerm,
         cityData.name,
         cityData.country,
         cityData.population,
