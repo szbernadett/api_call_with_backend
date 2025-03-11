@@ -9,7 +9,7 @@ const mongoURI = process.env.MONGO_URI;
 
 let server = express();
 server.use(express.json());
-server.use(cors({origin: "https://api-call-with-backend.vercel.app/", // Allow frontend
+server.use(cors({origin: "https://api-call-with-backend.vercel.app", // Allow frontend
   methods: ["GET", "POST", "PUT", "DELETE"], // Allow these methods
   credentials: true,})); // Enable CORS for all requests
 
