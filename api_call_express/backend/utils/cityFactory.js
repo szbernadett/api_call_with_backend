@@ -2,7 +2,7 @@ const { CityEntity } = require("../models/City");
 
 // creates inital city objects after the first api call to use in further code
 function createCities(response, searchTerm) {
-  if (!Array.isArray(response)) {
+  if (!Array.isArray(response?.data)) {
     console.error("Expected data to be an array, but got:", response);
     return [];
   }
