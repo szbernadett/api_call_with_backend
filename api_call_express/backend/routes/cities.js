@@ -18,7 +18,7 @@ router.get("/search", async (req, res) => {
   try {
     let dbCities = await City.find({ searchTerm: cityName });
     if(dbCities.length > 0){
-      console.log("Updating cities fetched from database");
+      console.log("Updating cities fetched from database for search term: ", cityName);
       const existingCities = dbCities.map(city => {
         const cityEntity = city.toCityEntity();
         return cityEntity;
@@ -32,7 +32,7 @@ router.get("/search", async (req, res) => {
       res.json({cities: citiesWithFilteredAttractions});
     
     } else {
-      console.log("Creating new city entities from API data");
+      console.log("Creating new city entities from API data for search term: ", cityName);
       const citySearchInfo = getCitySearchInfo(cityName);
       const options = {
         headers: citySearchInfo.headers
