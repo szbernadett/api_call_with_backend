@@ -38,8 +38,8 @@ router.get("/search", async (req, res) => {
         headers: citySearchInfo.headers
       };
       const cityDataResponse = await axios.get(citySearchInfo.url, options);
-      const cityData = {};
-      if(cityDataResponse.ok){
+      const cityData = [];
+      if(cityDataResponse.status ===200){
         cityData = cityDataResponse.data;
       }
 
