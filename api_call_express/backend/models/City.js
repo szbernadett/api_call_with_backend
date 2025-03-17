@@ -36,7 +36,7 @@ class CityEntity {
   // Filter attractions for display based on selected categories
   populateAttractionsForDisplay(selectedCategories) {
     if (this.attractions.length > 0 && selectedCategories?.length > 0) {
-      console.log("attractions: ", attractions);
+      console.log("attractions: ", this.attractions);
       let catsToMatch = [...selectedCategories];
 
       this.attractions.forEach((feature) => {
