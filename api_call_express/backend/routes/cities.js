@@ -38,10 +38,8 @@ router.get("/search", async (req, res) => {
         headers: citySearchInfo.headers
       };
       const cityDataResponse = await axios.get(citySearchInfo.url, options);
-      const cityData = [];
-      if(cityDataResponse.status ===200){
-        cityData = cityDataResponse.data;
-      }
+      const cityData = cityDataResponse.status === 200 ? cityDataResponse.data : [];
+     
 
       const initialCities = createCities(cityData, cityName);
       const uniqueCities = initialCities.length > 0 ? getUniqueCities(initialCities) : [];
