@@ -36,6 +36,7 @@ class CityEntity {
   // Filter attractions for display based on selected categories
   populateAttractionsForDisplay(selectedCategories) {
     if (this.attractions.length > 0 && selectedCategories?.length > 0) {
+      console.log("attractions: ", attractions);
       let catsToMatch = [...selectedCategories];
 
       this.attractions.forEach((feature) => {
@@ -62,7 +63,7 @@ class CityEntity {
     }
   }
 
-  // 📅 Extract weather forecast from API response
+  //  Extract weather forecast from API response
   extractForecastData(apiData) {
     this.forecast = apiData.forecast.forecastday.map((fDay) => ({
       date: fDay.date,
@@ -71,7 +72,7 @@ class CityEntity {
   }
 }
 
-// 🏗 Mongoose Schema for Persistent Storage
+//  Mongoose Schema for Persistent Storage
 const CitySchema = new mongoose.Schema(
   {
     searchTerm: { type: String, required: true },
