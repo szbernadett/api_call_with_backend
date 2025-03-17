@@ -38,14 +38,18 @@ router.get("/search", async (req, res) => {
         headers: citySearchInfo.headers
       };
       const cityDataResponse = await axios.get(citySearchInfo.url, options);
-      const cityData = cityDataResponse.data;
+      const cityData = {};
+      if(cityDataResponse.ok){
+        cityData = cityDataResponse.data;
+      }
 
-      const initialCities = createCities(cityData.data, cityName);
-      const uniqueCities = getUniqueCities(initialCities);
+      const initialCities = createCities(cityData, cityName);
+      const uniqueCities = initialCities.length > 0 ? getUniqueCities(initialCities) : [];
 
       const citiesWithTemp = await fetchCitiesWithTemperature(uniqueCities);
       const citiesWithAttractions = await fetchCitiesWithAttractions(citiesWithTemp, categories);
       const citiesWithForecast = await fetchCitiesWithForecast(citiesWithAttractions);
+      
       
       await City.insertMany(
         citiesWithForecast.map(city => ({
@@ -60,6 +64,7 @@ router.get("/search", async (req, res) => {
       );
   
       res.json({ cities: citiesWithForecast });
+    
     }
   } catch (error) {
     console.log(error.message);
@@ -98,7 +103,7 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
           headers: attractionsSearchInfo.headers
         };
         const response = await axios.get(attractionsSearchInfo.url, options);
-        city.attractions=response.data;
+        city.attractions= response.ok ? response.data : [];
         city.populateAttractionsForDisplay(selectedCategories);
       } catch (error) {
         console.warn("Error fetching attractions data:", error.message);
