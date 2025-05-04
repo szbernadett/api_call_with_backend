@@ -1,7 +1,7 @@
 let express = require("express");
 let router = express.Router();
 let axios = require("axios");
-
+const auth = require("../middleware/auth"); // Import auth middleware
 
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
 const createCities = require("../utils/cityFactory");
@@ -9,8 +9,8 @@ const SearchInfo = require("../models/SearchInfo");
 const { allAttractionCategories } = require("../models/AttractionCategory");
 const { City, CityEntity } = require("../models/City");
 
-
-router.get("/search", async (req, res) => { 
+// Protect the search route with auth middleware
+router.get("/search", auth, async (req, res) => { 
   const cityName = req.query.cityName;
   const categories = JSON.parse(decodeURIComponent(req.query.categories));
 

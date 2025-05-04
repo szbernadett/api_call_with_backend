@@ -20,24 +20,28 @@ export default function Header({ handleSearch, user, onLogout }) {
           width: "100%",
         }}
       >
-        {/* User info and logout */}
+        {/* User info and auth button */}
         <Box sx={{ 
           display: "flex", 
           justifyContent: "flex-end", 
           width: "100%", 
           mb: 2 
         }}>
-          <Typography sx={{ mr: 2, color: "white" }}>
-            Welcome, {user.username}
-          </Typography>
-          <Button 
-            variant="outlined" 
-            color="inherit" 
-            onClick={onLogout}
-            size="small"
-          >
-            Logout
-          </Button>
+          {user ? (
+            <>
+              <Typography sx={{ mr: 2, color: "white" }}>
+                Welcome, {user.username}
+              </Typography>
+              <Button 
+                variant="outlined" 
+                color="inherit" 
+                onClick={onLogout}
+                size="small"
+              >
+                Logout
+              </Button>
+            </>
+          ) : null}
         </Box>
 
         {/* Title */}
@@ -51,10 +55,12 @@ export default function Header({ handleSearch, user, onLogout }) {
           City Explorer
         </Typography>
 
-        {/* Search Bar */}
-        <Box sx={{ width: "100%", maxWidth: "1000px" }}>
-          <SearchBar handleSearch={handleSearch} isAuthenticated={!!user} />
-        </Box>
+        {/* Search Bar - only show if user is logged in */}
+        {user && (
+          <Box sx={{ width: "100%", maxWidth: "1000px" }}>
+            <SearchBar handleSearch={handleSearch} isAuthenticated={!!user} />
+          </Box>
+        )}
       </Toolbar>
     </AppBar>
   );

@@ -1,21 +1,22 @@
 import React from "react";
 import { Box, Grid2 } from "@mui/material";
-import Footer from "./Footer"; // Import your Footer component
+import Footer from "./Footer";
 import Header from "./Header";
 import ErrorCard from "./ErrorCard";
 import Loading from "./Loading";
 import NoResultsCard from "./NoResultsCard";
 import NoSearchCard from "./NoSearchCard";
 import CardGrid from "./CardGrid";
+import AuthContainer from "./AuthContainer";
 import "../index.css";
 
-export default function AppLayout({ handleSearch, cities, error, loading, user, onLogout }) {
+export default function AppLayout({ handleSearch, cities, error, loading, user, onLogin, onLogout }) {
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh", // Full viewport height
+        minHeight: "100vh",
       }}
     >
       {/* Header */}
@@ -24,21 +25,27 @@ export default function AppLayout({ handleSearch, cities, error, loading, user, 
       <Box
         component="main"
         sx={{
-          flex: 1, // Takes up remaining space
+          flex: 1,
           display: "flex",
           flexDirection: "column",
-          p: 2, // Optional padding for main content
+          p: 2,
           margin: "20px auto",
         }}
       >
-        {cities?.length === 0 && <NoResultsCard />}
-        {error && <ErrorCard />}
-        {!loading && !cities && !error && <NoSearchCard />}
-        {loading && <Loading />}
-        {cities && !loading && (
-          <Grid2 container spacing={2}>
-            <CardGrid cities={cities} />
-          </Grid2>
+        {!user ? (
+          <AuthContainer onLogin={onLogin} />
+        ) : (
+          <>
+            {cities?.length === 0 && <NoResultsCard />}
+            {error && <ErrorCard />}
+            {!loading && !cities && !error && <NoSearchCard />}
+            {loading && <Loading />}
+            {cities && !loading && (
+              <Grid2 container spacing={2}>
+                <CardGrid cities={cities} />
+              </Grid2>
+            )}
+          </>
         )}
       </Box>
       {/* Footer */}

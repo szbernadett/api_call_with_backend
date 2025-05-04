@@ -2,24 +2,29 @@ let createError = require("http-errors");
 let express = require("express");
 let path = require("path");
 require("dotenv").config();
-const cors = require("cors"); // Import cors
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 5000;
 const mongoose = require("mongoose");
 const mongoURI = process.env.MONGO_URI;
 
 let server = express();
 server.use(express.json());
-server.use(cors({origin: "https://api-call-with-backend.vercel.app", // Allow frontend
+server.use(cookieParser()); // Add cookie parser
+server.use(cors({
+  origin: "https://api-call-with-backend.vercel.app", // Allow frontend
   methods: ["GET", "POST", "PUT", "DELETE"], // Allow these methods
-  credentials: true,})); // Enable CORS for all requests
+  credentials: true, // Important for cookies
+}));
 
-  mongoose.connect(mongoURI)
+mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
 let indexRouter = require("./routes/index");
 let usersRouter = require("./routes/users");
 let citiesRouter = require("./routes/cities");
+let authRouter = require("./routes/auth"); // Add auth router
 
 // view engine setup
 server.set("views", path.join(__dirname, "views"));
@@ -32,6 +37,7 @@ server.use(express.static(path.join(__dirname, "public")));
 server.use("/", indexRouter);
 server.use("/users", usersRouter);
 server.use("/cities", citiesRouter);
+server.use("/auth", authRouter); // Mount auth routes
 
 // catch 404 and forward to error handler
 server.use(function(req, res, next) {
@@ -49,7 +55,7 @@ server.use(function(err, req, res, next) {
   res.render("error");
 });
 
-server.listen(5000, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 

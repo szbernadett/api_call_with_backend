@@ -253,6 +253,7 @@ export default function App() {
     error, 
     loading, 
     user, 
+    onLogin: handleLogin,
     onLogout: handleLogout 
   };
   
