@@ -1,24 +1,25 @@
 import React from "react";
-import { Card, CardContent, Typography, Grid2 } from "@mui/material";
+import { Card, CardContent, Typography, Grid } from "@mui/material";
 import ForecastChart from "./ForecastChart";
 
 export default function CardGrid({ cities }) {
   console.log(cities);
   return (
-    <Grid2
+    <Grid
       container
-      spacing={2} // Adds consistent spacing between grid cells
-      justifyContent="center" // Centers grid cells horizontally
-      alignItems="flex-start" // Aligns grid cells vertically at the top
+      spacing={2}
+      justifyContent="center"
+      alignItems="flex-start"
     >
       {cities.map((city) => (
-        <Grid2
+        <Grid
+          item
           key={city.id || city.name}
           xs={12}
           sm={6}
           md={4}
-          lg={3} // Responsive breakpoints
-          style={{ display: "flex", justifyContent: "center" }} // Centers the card within the grid cell
+          lg={3}
+          style={{ display: "flex", justifyContent: "center" }}
         >
           <Card
             style={{
@@ -76,8 +77,8 @@ export default function CardGrid({ cities }) {
               )}
             </CardContent>
           </Card>
-        </Grid2>
+        </Grid>
       ))}
-    </Grid2>
+    </Grid>
   );
 }

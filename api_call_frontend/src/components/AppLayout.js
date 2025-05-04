@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Grid2 } from "@mui/material";
-import Footer from "./Footer"; // Import your Footer component
-import Header from "./Header";
+import { Box, Grid } from "@mui/material";
+import Footer from "./Footer";
 import ErrorCard from "./ErrorCard";
 import Loading from "./Loading";
 import NoResultsCard from "./NoResultsCard";
@@ -18,8 +17,6 @@ export default function AppLayout({ handleSearch, cities, error, loading }) {
         minHeight: "100vh", // Full viewport height
       }}
     >
-      {/* Header */}
-      <Header handleSearch={handleSearch} />
       {/* Main Content */}
       <Box
         component="main"
@@ -36,9 +33,9 @@ export default function AppLayout({ handleSearch, cities, error, loading }) {
         {!loading && !cities && !error && <NoSearchCard />}
         {loading && <Loading />}
         {cities && !loading && (
-          <Grid2 container spacing={2}>
+          <Grid container spacing={2}>
             <CardGrid cities={cities} />
-          </Grid2>
+          </Grid>
         )}
       </Box>
       {/* Footer */}

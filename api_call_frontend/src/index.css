@@ -19,9 +19,39 @@ body {
   background-position: center; /* Center the image */
   height: 100vh; /* Ensure the background spans the full viewport height */
   background-color: #092e4b;
+  background-attachment: fixed; /* Keep background fixed when scrolling */
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+/* Authentication form styles */
+.auth-form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Make sure Material UI components have proper contrast on the background */
+.MuiPaper-root {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Ensure text fields in dark backgrounds are readable */
+.MuiInputBase-input {
+  color: inherit !important;
+}
+
+/* Add a subtle transition effect for buttons */
+.MuiButton-root {
+  transition: transform 0.2s ease-in-out !important;
+}
+
+.MuiButton-root:hover:not(:disabled) {
+  transform: translateY(-2px);
 }

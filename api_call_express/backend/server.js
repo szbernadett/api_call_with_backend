@@ -2,36 +2,61 @@ let createError = require("http-errors");
 let express = require("express");
 let path = require("path");
 require("dotenv").config();
-const cors = require("cors"); // Import cors
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const session = require("express-session");
 const PORT = process.env.PORT || 5000;
 const mongoose = require("mongoose");
 const mongoURI = process.env.MONGO_URI;
 
 let server = express();
 server.use(express.json());
-server.use(cors({origin: "https://api-call-with-backend.vercel.app", // Allow frontend
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow these methods
-  credentials: true,})); // Enable CORS for all requests
+server.use(cookieParser());
 
-  mongoose.connect(mongoURI)
+// Disable X-Powered-By header for security
+server.disable("x-powered-by");
+
+// Configure CORS with credentials
+server.use(cors({
+  origin: "https://api-call-with-backend.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
+
+// Configure session
+server.use(session({
+  secret: process.env.SESSION_SECRET || "session-secret-key",
+  name: "sessionId", // Custom name instead of default
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // Use secure in production
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax', // Important for cross-site requests
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Connect to MongoDB
+mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
-let indexRouter = require("./routes/index");
-let usersRouter = require("./routes/users");
-let citiesRouter = require("./routes/cities");
+// Routes
+const indexRouter = require("./routes/index");
+const usersRouter = require("./routes/users");
+const citiesRouter = require("./routes/cities");
+let authRouter = require("./routes/auth");
+const adminRouter = require('./routes/admin');
 
-// view engine setup
-server.set("views", path.join(__dirname, "views"));
-server.set("view engine", "hbs");
 
-server.use(express.json());
-server.use(express.urlencoded({ extended: false }));
-server.use(express.static(path.join(__dirname, "public")));
+
 
 server.use("/", indexRouter);
 server.use("/users", usersRouter);
+server.use("/auth", authRouter);
 server.use("/cities", citiesRouter);
+server.use('/api/admin', adminRouter);
 
 // catch 404 and forward to error handler
 server.use(function(req, res, next) {
@@ -40,17 +65,15 @@ server.use(function(req, res, next) {
 
 // error handler
 server.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  // render the error page
   res.status(err.status || 500);
-  res.render("error");
-});
-
-server.listen(5000, () => {
-  console.log(`Server running on port ${PORT}`);
+  res.json({
+    message: err.message,
+    error: req.app.get("env") === "development" ? err : {}
+  });
 });
 
 module.exports = server;
+
+
+
+

@@ -1,7 +1,7 @@
 let express = require("express");
 let router = express.Router();
 let axios = require("axios");
-
+const { authenticate } = require("../middleware/auth");
 
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
 const createCities = require("../utils/cityFactory");
@@ -9,6 +9,8 @@ const SearchInfo = require("../models/SearchInfo");
 const { allAttractionCategories } = require("../models/AttractionCategory");
 const { City, CityEntity } = require("../models/City");
 
+// Apply authentication middleware to all routes in this router
+router.use(authenticate);
 
 router.get("/search", async (req, res) => { 
   const cityName = req.query.cityName;
@@ -65,10 +67,9 @@ router.get("/search", async (req, res) => {
     
     }
   } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ error: error.message });
- 
-  } 
+    console.error("Error in /search route:", error);
+    res.status(500).json({ error: "An error occurred while processing your request" });
+  }
 
 });
 

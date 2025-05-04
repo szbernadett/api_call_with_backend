@@ -1,10 +1,10 @@
 import React from "react";
-import { Card, CardContent, Typography, Grid2 } from "@mui/material";
+import { Card, CardContent, Typography, Grid } from "@mui/material";
 
 export default function NoResultsCard() {
   return (
-    <Grid2 container justifyContent="center">
-      <Grid2>
+    <Grid container justifyContent="center">
+      <Grid item>
         <Card
           style={{
             minWidth: 320,
@@ -21,7 +21,7 @@ export default function NoResultsCard() {
             </Typography>
           </CardContent>
         </Card>
-      </Grid2>
-    </Grid2>
+      </Grid>
+    </Grid>
   );
 }
