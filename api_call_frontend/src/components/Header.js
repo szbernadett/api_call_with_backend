@@ -1,32 +1,51 @@
 import React from "react";
-import { AppBar, Toolbar, Typography, Box } from "@mui/material";
-import SearchBar from "./SearchBar"; // Adjust the path as necessary
+import { AppBar, Toolbar, Typography, Box, Button } from "@mui/material";
+import SearchBar from "./SearchBar";
 
-export default function Header({ handleSearch }) {
+export default function Header({ handleSearch, user, onLogout }) {
   return (
     <AppBar
       position="static"
       sx={{
         width: "100vw",
         background: "linear-gradient(to bottom, #2F536A, #49708D)",
-        opacity: 0.95, // Slight transparency
-        padding: 2, // Add some padding for spacing
-        //zIndex: 1201, // Ensure the header stays on top
+        opacity: 0.95,
+        padding: 2,
       }}
     >
       <Toolbar
         sx={{
-          flexDirection: "column", // Stack items vertically
-          alignItems: "center", // Center items horizontally
+          flexDirection: "column",
+          alignItems: "center",
           width: "100%",
         }}
       >
+        {/* User info and logout */}
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          width: "100%", 
+          mb: 2 
+        }}>
+          <Typography sx={{ mr: 2, color: "white" }}>
+            Welcome, {user.username}
+          </Typography>
+          <Button 
+            variant="outlined" 
+            color="inherit" 
+            onClick={onLogout}
+            size="small"
+          >
+            Logout
+          </Button>
+        </Box>
+
         {/* Title */}
         <Typography
           variant="h3"
           sx={{
-            color: "white", // Ensure contrast with the background
-            marginBottom: 2, // Add space below the title
+            color: "white",
+            marginBottom: 2,
           }}
         >
           City Explorer
@@ -34,7 +53,7 @@ export default function Header({ handleSearch }) {
 
         {/* Search Bar */}
         <Box sx={{ width: "100%", maxWidth: "1000px" }}>
-          <SearchBar handleSearch={handleSearch} />
+          <SearchBar handleSearch={handleSearch} isAuthenticated={!!user} />
         </Box>
       </Toolbar>
     </AppBar>

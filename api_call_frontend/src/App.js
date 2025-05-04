@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiCall } from "./utils/fetchData";
 import { createCities } from "./utils/cityFactory";
 import {
@@ -8,13 +8,51 @@ import {
   getForecastSearchInfo,
 } from "./utils/searchInfoFactory";
 import AppLayout from "./components/AppLayout";
+import AuthContainer from "./components/AuthContainer";
 
 export default function App() {
   const [cities, setCities] = useState(null);
   const [error, setError] = useState(null);
   const [apiError, setApiError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
   const { callApi } = apiCall();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch("https://api-call-with-backend.onrender.com/auth/status", {
+          credentials: "include"
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error("Auth check failed:", err);
+      }
+    };
+    
+    checkAuthStatus();
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("https://api-call-with-backend.onrender.com/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+      setUser(null);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
 
   /**************************************************************************** */
   /*                          SEARCH HANDLER FUNCTION                           */
@@ -205,7 +243,19 @@ export default function App() {
   /**************************************************************************** */
   /*                             RETURNED COMPONENTS                            */
   /**************************************************************************** */
-  const props = { handleSearch, cities, error, loading };
+  if (!user) {
+    return <AuthContainer onLogin={handleLogin} />;
+  }
+
+  const props = { 
+    handleSearch, 
+    cities, 
+    error, 
+    loading, 
+    user, 
+    onLogout: handleLogout 
+  };
+  
   return <AppLayout {...props} />;
 }
 

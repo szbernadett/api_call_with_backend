@@ -18,7 +18,7 @@ const CategoryEnum = Object.freeze({
   Sport: "sport",
 });
 
-export default function SearchBar({ handleSearch }) {
+export default function SearchBar({ handleSearch, isAuthenticated }) {
   const [city, setCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([
     CategoryEnum.Cultural,
@@ -33,7 +33,7 @@ export default function SearchBar({ handleSearch }) {
     );
   };
 
-  const isSearchDisabled = selectedCategories.length === 0;
+  const isSearchDisabled = selectedCategories.length === 0 || !isAuthenticated;
 
   return (
     <Box
@@ -56,6 +56,7 @@ export default function SearchBar({ handleSearch }) {
           variant="outlined"
           value={city}
           onChange={(e) => setCity(e.target.value)}
+          disabled={!isAuthenticated}
           inputProps={{
             "aria-label": "Enter city", // Accessible label for screen readers
           }}
@@ -139,6 +140,7 @@ export default function SearchBar({ handleSearch }) {
                   size="medium"
                   checked={selectedCategories.includes(CategoryEnum[key])}
                   onChange={() => handleCheckboxChange(CategoryEnum[key])}
+                  disabled={!isAuthenticated}
                   sx={{
                     transform: "scale(0.9)", // Make the checkbox slightly smaller
                     "&.Mui-checked": {

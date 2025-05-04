@@ -9,7 +9,7 @@ import NoSearchCard from "./NoSearchCard";
 import CardGrid from "./CardGrid";
 import "../index.css";
 
-export default function AppLayout({ handleSearch, cities, error, loading }) {
+export default function AppLayout({ handleSearch, cities, error, loading, user, onLogout }) {
   return (
     <Box
       sx={{
@@ -19,7 +19,7 @@ export default function AppLayout({ handleSearch, cities, error, loading }) {
       }}
     >
       {/* Header */}
-      <Header handleSearch={handleSearch} />
+      <Header handleSearch={handleSearch} user={user} onLogout={onLogout} />
       {/* Main Content */}
       <Box
         component="main"
