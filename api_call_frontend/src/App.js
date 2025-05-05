@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { apiCall } from "./utils/fetchData";
 import { createCities } from "./utils/cityFactory";
 import {
@@ -9,6 +10,7 @@ import {
 } from "./utils/searchInfoFactory";
 import AppLayout from "./components/AppLayout";
 import AuthContainer from "./components/AuthContainer";
+import AdminDashboard from "./components/AdminDashboard";
 
 export default function App() {
   const [cities, setCities] = useState(null);
@@ -243,20 +245,39 @@ export default function App() {
   /**************************************************************************** */
   /*                             RETURNED COMPONENTS                            */
   /**************************************************************************** */
-  if (!user) {
-    return <AuthContainer onLogin={handleLogin} />;
-  }
-
-  const props = { 
-    handleSearch, 
-    cities, 
-    error, 
-    loading, 
-    user, 
-    onLogin: handleLogin,
-    onLogout: handleLogout 
-  };
-  
-  return <AppLayout {...props} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route 
+          path="/admin" 
+          element={
+            user && user.role === "admin" ? (
+              <AdminDashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/" 
+          element={
+            !user ? (
+              <AuthContainer onLogin={handleLogin} />
+            ) : (
+              <AppLayout 
+                handleSearch={handleSearch} 
+                cities={cities} 
+                error={error} 
+                loading={loading} 
+                user={user} 
+                onLogin={handleLogin}
+                onLogout={handleLogout} 
+              />
+            )
+          } 
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 

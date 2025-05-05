@@ -1,8 +1,15 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Box, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import SearchBar from "./SearchBar";
 
 export default function Header({ handleSearch, user, onLogout }) {
+  const navigate = useNavigate();
+  
+  const handleAdminClick = () => {
+    navigate('/admin');
+  };
+
   return (
     <AppBar
       position="static"
@@ -32,6 +39,17 @@ export default function Header({ handleSearch, user, onLogout }) {
               <Typography sx={{ mr: 2, color: "white" }}>
                 Welcome, {user.username}
               </Typography>
+              
+                <Button 
+                  variant="outlined" 
+                  color="inherit"
+                  onClick={handleAdminClick}
+                  size="small"
+                  sx={{ mr: 2 }}
+                >
+                  Admin Dashboard
+                </Button>
+              
               <Button 
                 variant="outlined" 
                 color="inherit" 
