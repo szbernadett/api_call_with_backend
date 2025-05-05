@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -34,8 +35,10 @@ export default function AdminDashboard({ user, onLogout }) {
   const [error, setError] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editFormData, setEditFormData] = useState({ username: "", email: "" });
+  const [newUserData, setNewUserData] = useState({ username: "", email: "", password: "", confirmPassword: "" });
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   // Fetch users on component mount
@@ -73,6 +76,11 @@ export default function AdminDashboard({ user, onLogout }) {
     setSelectedUser(user);
     setEditFormData({ username: user.username, email: user.email });
     setEditDialogOpen(true);
+  };
+
+  const handleAddUserClick = () => {
+    setNewUserData({ username: "", email: "", password: "", confirmPassword: "" });
+    setAddUserDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -127,6 +135,44 @@ export default function AdminDashboard({ user, onLogout }) {
     }
   };
 
+  const handleAddUserSubmit = async () => {
+    // Validate passwords match
+    if (newUserData.password !== newUserData.confirmPassword) {
+      setSnackbar({ open: true, message: "Passwords don't match", severity: "error" });
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api-call-with-backend.onrender.com/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: newUserData.username,
+          email: newUserData.email,
+          password: newUserData.password
+        }),
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create user");
+      }
+      
+      const newUser = await response.json();
+      
+      // Add new user to state
+      setUsers([...users, newUser]);
+      setSnackbar({ open: true, message: "User created successfully", severity: "success" });
+      setAddUserDialogOpen(false);
+    } catch (err) {
+      console.error("Error creating user:", err);
+      setSnackbar({ open: true, message: err.message, severity: "error" });
+    }
+  };
+
   const handleBackToHome = () => {
     navigate('/');
   };
@@ -161,9 +207,31 @@ export default function AdminDashboard({ user, onLogout }) {
           width: "100%",
         }}
       >
-        <Typography variant="h4" sx={{ mb: 4, textAlign: "center" }}>
-          Admin Dashboard
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+          <Typography variant="h4" sx={{ textAlign: { xs: "center", sm: "left" } }}>
+            Admin Dashboard
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PersonAddIcon />}
+            onClick={handleAddUserClick}
+            sx={{ display: { xs: "none", sm: "flex" } }}
+          >
+            Add User
+          </Button>
+        </Box>
+        
+        {/* Mobile Add User Button */}
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<PersonAddIcon />}
+          onClick={handleAddUserClick}
+          sx={{ display: { xs: "flex", sm: "none" }, mb: 2, alignSelf: "center" }}
+        >
+          Add User
+        </Button>
         
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -298,12 +366,77 @@ export default function AdminDashboard({ user, onLogout }) {
         </DialogActions>
       </Dialog>
       
+      {/* Add User Dialog */}
+      <Dialog
+        open={addUserDialogOpen}
+        onClose={() => setAddUserDialogOpen(false)}
+        aria-labelledby="add-user-dialog-title"
+      >
+        <DialogTitle id="add-user-dialog-title">
+          Add New User
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="new-username"
+            label="Username"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={newUserData.username}
+            onChange={(e) => setNewUserData({...newUserData, username: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            id="new-email"
+            label="Email"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={newUserData.email}
+            onChange={(e) => setNewUserData({...newUserData, email: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            id="new-password"
+            label="Password"
+            type="password"
+            fullWidth
+            variant="outlined"
+            value={newUserData.password}
+            onChange={(e) => setNewUserData({...newUserData, password: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            id="new-confirm-password"
+            label="Confirm Password"
+            type="password"
+            fullWidth
+            variant="outlined"
+            value={newUserData.confirmPassword}
+            onChange={(e) => setNewUserData({...newUserData, confirmPassword: e.target.value})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddUserDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleAddUserSubmit} color="primary">
+            Create User
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({...snackbar, open: false})}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert 
           onClose={() => setSnackbar({...snackbar, open: false})} 
@@ -319,3 +452,5 @@ export default function AdminDashboard({ user, onLogout }) {
     </Box>
   );
 }
+
+

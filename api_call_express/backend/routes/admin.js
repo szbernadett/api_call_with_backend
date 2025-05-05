@@ -21,8 +21,10 @@ router.get("/dashboard", async (req, res) => {
 
 // Get all users
 router.get("/users", async (req, res) => {
+  console.log("Admin /users endpoint called");
   try {
     const users = await User.find().select("-password");
+    console.log("Found users:", users.length);
     res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -74,4 +76,39 @@ router.put("/users/:id", async (req, res) => {
   }
 });
 
+// Create new user
+router.post("/users", async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ username }, { email }] 
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: "Username or email already exists" 
+      });
+    }
+
+    // Create new user
+    const newUser = new User({ username, email, password });
+    await newUser.save();
+
+    // Return the new user without password
+    const userToReturn = await User.findById(newUser._id).select("-password");
+    
+    res.status(201).json(userToReturn);
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ 
+      message: "Error creating user" 
+    });
+  }
+});
+
 module.exports = router;
+
+
+
