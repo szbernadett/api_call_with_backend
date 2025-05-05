@@ -251,11 +251,7 @@ export default function App() {
         <Route 
           path="/admin" 
           element={
-            user && user.role === "admin" ? (
-              <AdminDashboard user={user} onLogout={handleLogout} />
-            ) : (
-              <Navigate to="/" replace />
-            )
+            <AdminDashboard user={user} onLogout={handleLogout} />
           } 
         />
         <Route 

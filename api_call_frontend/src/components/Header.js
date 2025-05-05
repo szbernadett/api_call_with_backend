@@ -7,6 +7,7 @@ export default function Header({ handleSearch, user, onLogout }) {
   const navigate = useNavigate();
   
   const handleAdminClick = () => {
+    console.log('Admin button clicked');
     navigate('/admin');
   };
 
