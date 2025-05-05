@@ -20,6 +20,11 @@ export default function App() {
   const [user, setUser] = useState(null);
   const { callApi } = apiCall();
 
+  // Function to check if user is admin
+  const isAdmin = (user) => {
+    return user && user.username && user.username.toLowerCase() === "admin";
+  };
+
   // Check if user is already logged in
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -251,7 +256,11 @@ export default function App() {
         <Route 
           path="/admin" 
           element={
-            <AdminDashboard user={user} onLogout={handleLogout} />
+            isAdmin(user) ? (
+              <AdminDashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
           } 
         />
         <Route 

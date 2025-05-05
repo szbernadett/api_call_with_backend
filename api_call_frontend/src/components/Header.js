@@ -11,6 +11,9 @@ export default function Header({ handleSearch, user, onLogout }) {
     navigate('/admin');
   };
 
+  // Check if user is admin (case insensitive)
+  const isAdmin = user && user.username && user.username.toLowerCase() === "admin";
+
   return (
     <AppBar
       position="static"
@@ -41,6 +44,7 @@ export default function Header({ handleSearch, user, onLogout }) {
                 Welcome, {user.username}
               </Typography>
               
+              {isAdmin && (
                 <Button 
                   variant="outlined" 
                   color="inherit"
@@ -50,6 +54,7 @@ export default function Header({ handleSearch, user, onLogout }) {
                 >
                   Admin Dashboard
                 </Button>
+              )}
               
               <Button 
                 variant="outlined" 

@@ -24,7 +24,8 @@ mongoose.connect(mongoURI)
 let indexRouter = require("./routes/index");
 let usersRouter = require("./routes/users");
 let citiesRouter = require("./routes/cities");
-let authRouter = require("./routes/auth"); // Add auth router
+let authRouter = require("./routes/auth"); // Auth router
+let adminRouter = require("./routes/admin"); // Admin router
 
 // view engine setup
 server.set("views", path.join(__dirname, "views"));
@@ -37,7 +38,8 @@ server.use(express.static(path.join(__dirname, "public")));
 server.use("/", indexRouter);
 server.use("/users", usersRouter);
 server.use("/cities", citiesRouter);
-server.use("/auth", authRouter); // Mount auth routes
+server.use("/auth", authRouter);
+server.use("/admin", adminRouter); // Mount admin routes
 
 // catch 404 and forward to error handler
 server.use(function(req, res, next) {
