@@ -4,20 +4,37 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ForecastChart from "./ForecastChart";
 
 export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar }) {
-  console.log(cities);
+  // Create a ref to store abort controllers
+  const abortControllerRef = React.useRef({});
+  
+  // Clean up any pending requests when component unmounts
+  React.useEffect(() => {
+    return () => {
+      // Abort any pending requests when component unmounts
+      Object.values(abortControllerRef.current).forEach(controller => {
+        if (controller) controller.abort();
+      });
+    };
+  }, []);
   
   const handleDelete = async (city) => {
     try {
-      // Use the full city object for more precise deletion
-      console.log(`Attempting to delete city: ${city.name} (ID: ${city.id})`);
+      // Create an AbortController for this specific request
+      const cityId = city.id || city.name;
+      abortControllerRef.current[cityId] = new AbortController();
+      const signal = abortControllerRef.current[cityId].signal;
       
-      // For district names, use the exact full name
+      console.log(`Attempting to delete city: ${city.name} (ID: ${city.id})`);
       const deleteTarget = city.name;
       
       let response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(deleteTarget)}`, {
         method: "DELETE",
-        credentials: "include"
+        credentials: "include",
+        signal // Pass the abort signal to the fetch request
       });
+      
+      // Clean up the controller after request completes
+      delete abortControllerRef.current[cityId];
       
       if (response.ok) {
         console.log(`Successfully deleted city: ${city.name}`);
@@ -62,6 +79,12 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
         }
       }
     } catch (error) {
+      // Don't show error for aborted requests
+      if (error.name === 'AbortError') {
+        console.log("Delete request was cancelled");
+        return;
+      }
+      
       console.error("Error deleting city:", error);
       
       // Show error message if we have a snackbar function
