@@ -1,4 +1,4 @@
-export  const AttractionCategory = Object.freeze({
+const AttractionCategory = Object.freeze({
   Historical: "historic",
   Cultural: "cultural",
   Architecture: "architecture",
@@ -7,12 +7,15 @@ export  const AttractionCategory = Object.freeze({
   Sport: "sport",
 });
 
-export const ReverseAttractionCategory = Object.freeze(
+const ReverseAttractionCategory = Object.freeze(
   Object.fromEntries(
     Object.entries(AttractionCategory).map(([key, value]) => [value, key])
   )
 );
 
-export const allAttractionCategories = Object.values(AttractionCategory);
+const allAttractionCategories = Object.values(AttractionCategory);
 
-// module.exports = {AttractionCategory};
+module.exports = { 
+  AttractionCategory, 
+  ReverseAttractionCategory, 
+  allAttractionCategories };

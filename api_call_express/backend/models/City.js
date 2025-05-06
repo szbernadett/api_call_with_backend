@@ -35,15 +35,26 @@ class CityEntity {
 
   // Filter attractions for display based on selected categories
   populateAttractionsForDisplay(selectedCategories) {
+    // Ensure attractions is always an array
+    if (!Array.isArray(this.attractions)) {
+      console.warn("Attractions is not an array:", this.attractions);
+      this.attractions = Array.isArray(this.attractions?.features) 
+        ? this.attractions.features 
+        : [];
+    }
+    
     if (this.attractions.length > 0 && selectedCategories?.length > 0) {
-      console.log("attractions: ", this.attractions);
+      console.log("Processing attractions:", this.attractions.length);
       let catsToMatch = [...selectedCategories];
 
       this.attractions.forEach((feature) => {
-        if (feature.name) {
+        if (feature && feature.name) {
           if (catsToMatch.length > 0) {
+            // Make sure kinds exists and is a string
+            const kinds = typeof feature.kinds === 'string' ? feature.kinds : '';
+            
             const matchingCat = catsToMatch.find((cat) =>
-              feature.kinds.split(",").includes(cat)
+              kinds.split(",").includes(cat)
             );
 
             if (matchingCat) {

@@ -163,11 +163,33 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
         const options = {
           headers: attractionsSearchInfo.headers
         };
-        const response = await axios.get(attractionsSearchInfo.url, options);
-        city.attractions= response.ok ? response.data : [];
+        
+        // Use our improved fetch with retry and caching
+        const cacheKey = `attractions_${city.latitude}_${city.longitude}`;
+        let attractionsData;
+        
+        try {
+          // Try to use the cached/queued fetch
+          attractionsData = await cachedFetch(attractionsSearchInfo.url, options, cacheKey);
+        } catch (error) {
+          console.warn("Error with cached fetch:", error);
+          // Fallback to regular axios
+          const response = await axios.get(attractionsSearchInfo.url, options);
+          attractionsData = response.data;
+        }
+        
+        // Ensure attractions is an array
+        city.attractions = Array.isArray(attractionsData) ? attractionsData : [];
+        
+        // Log what we got
+        console.log(`Got ${city.attractions.length} attractions for ${city.name}`);
+        
+        // Populate display attractions
         city.populateAttractionsForDisplay(selectedCategories);
       } catch (error) {
         console.warn("Error fetching attractions data:", error.message);
+        // Initialize with empty array if there was an error
+        city.attractions = [];
       }
       return city;
     })
