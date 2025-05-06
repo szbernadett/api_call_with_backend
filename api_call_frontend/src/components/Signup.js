@@ -27,13 +27,16 @@ export default function Signup({ switchToLogin }) {
       const data = await response.json();
       
       if (!response.ok) {
+        // Display the specific error message from the server
         setError(data.message || "Signup failed");
+        console.error("Signup error:", data);
         return;
       }
       
       // Redirect to login on successful signup
       switchToLogin();
     } catch (err) {
+      console.error("Signup network error:", err);
       setError("Signup failed. Please try again.");
     }
   };
