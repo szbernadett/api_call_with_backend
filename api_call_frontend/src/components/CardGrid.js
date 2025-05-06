@@ -1,15 +1,35 @@
 import React from "react";
-import { Card, CardContent, Typography, Grid2 } from "@mui/material";
+import { Card, CardContent, Typography, Grid2, IconButton, Box } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ForecastChart from "./ForecastChart";
 
-export default function CardGrid({ cities }) {
+export default function CardGrid({ cities, onDeleteCity }) {
   console.log(cities);
+  
+  const handleDelete = async (cityId) => {
+    try {
+      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/${cityId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      
+      if (response.ok) {
+        // Call the parent component's handler to update UI
+        onDeleteCity(cityId);
+      } else {
+        console.error("Failed to delete city");
+      }
+    } catch (error) {
+      console.error("Error deleting city:", error);
+    }
+  };
+  
   return (
     <Grid2
       container
-      spacing={2} // Adds consistent spacing between grid cells
-      justifyContent="center" // Centers grid cells horizontally
-      alignItems="flex-start" // Aligns grid cells vertically at the top
+      spacing={2}
+      justifyContent="center"
+      alignItems="flex-start"
     >
       {cities.map((city) => (
         <Grid2
@@ -17,8 +37,8 @@ export default function CardGrid({ cities }) {
           xs={12}
           sm={6}
           md={4}
-          lg={3} // Responsive breakpoints
-          style={{ display: "flex", justifyContent: "center" }} // Centers the card within the grid cell
+          lg={3}
+          style={{ display: "flex", justifyContent: "center" }}
         >
           <Card
             style={{
@@ -29,9 +49,19 @@ export default function CardGrid({ cities }) {
             }}
           >
             <CardContent>
-              <Typography variant="h5" component="div">
-                {city.name}
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h5" component="div">
+                  {city.name}
+                </Typography>
+                <IconButton 
+                  onClick={() => handleDelete(city.id)}
+                  size="small"
+                  color="error"
+                  aria-label="delete city"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
               <Typography variant="body2" color="text.secondary">
                 <strong>Country:</strong> {city.countryName}
               </Typography>

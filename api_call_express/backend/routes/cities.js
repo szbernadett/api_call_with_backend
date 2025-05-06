@@ -133,4 +133,31 @@ function getUniqueCities(cities) {
   return Array.from(new Map(cities.map((city) => [city.id, city])).values());
 }
 
+// Add this new route for deleting a city
+router.delete("/:id", auth, async (req, res) => {
+  const cityId = req.params.id;
+  
+  try {
+    // Find the city by ID
+    const city = await City.findOne({ 
+      $or: [
+        { _id: mongoose.isValidObjectId(cityId) ? cityId : null },
+        { "name": cityId }
+      ]
+    });
+    
+    if (!city) {
+      return res.status(404).json({ message: "City not found" });
+    }
+    
+    // Delete the city
+    await City.deleteOne({ _id: city._id });
+    
+    res.json({ message: "City deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting city:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports=router;

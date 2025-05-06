@@ -247,6 +247,11 @@ export default function App() {
     );
   };
 
+  // Add this function to handle city deletion in UI
+  const handleDeleteCity = (cityId) => {
+    setCities(prevCities => prevCities.filter(city => city.id !== cityId));
+  };
+
   /**************************************************************************** */
   /*                             RETURNED COMPONENTS                            */
   /**************************************************************************** */

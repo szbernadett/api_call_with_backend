@@ -304,6 +304,8 @@ export default function AdminDashboard({ user, onLogout }) {
         onClose={() => setDeleteDialogOpen(false)}
         aria-labelledby="delete-dialog-title"
         aria-describedby="delete-dialog-description"
+        disableEnforceFocus
+        container={() => document.getElementById('root')}
       >
         <DialogTitle id="delete-dialog-title">
           Confirm Delete
@@ -328,6 +330,8 @@ export default function AdminDashboard({ user, onLogout }) {
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
         aria-labelledby="edit-dialog-title"
+        disableEnforceFocus
+        container={() => document.getElementById('root')}
       >
         <DialogTitle id="edit-dialog-title">
           Edit User
@@ -371,6 +375,8 @@ export default function AdminDashboard({ user, onLogout }) {
         open={addUserDialogOpen}
         onClose={() => setAddUserDialogOpen(false)}
         aria-labelledby="add-user-dialog-title"
+        disableEnforceFocus
+        container={() => document.getElementById('root')}
       >
         <DialogTitle id="add-user-dialog-title">
           Add New User
@@ -452,5 +458,6 @@ export default function AdminDashboard({ user, onLogout }) {
     </Box>
   );
 }
+
 
 
