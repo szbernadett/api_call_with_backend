@@ -36,15 +36,24 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
         if (typeof onDeleteCity === 'function') {
           // If parent component provided a handler, use it
           onDeleteCity(cityId);
-        } else {
-          // Otherwise update local state directly if available
-          setCities && setCities(prevCities => 
-            prevCities.filter(city => 
-              city.id !== cityId && 
-              city.name !== cityId && 
-              !city.name.includes(cityId)
-            )
-          );
+        } else if (setCities) {
+          // Otherwise update local state directly
+          setCities(prevCities => {
+            console.log("Filtering cities:", prevCities.length);
+            // Create a new array without the deleted city
+            return prevCities.filter(city => {
+              const shouldKeep = 
+                city.id !== cityId && 
+                city.name !== cityId && 
+                !city.name.includes(cityId);
+              
+              if (!shouldKeep) {
+                console.log(`Removing city: ${city.name}`);
+              }
+              
+              return shouldKeep;
+            });
+          });
         }
         
         // Show success message if we have a snackbar function
@@ -106,7 +115,7 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
                   {city.name}
                 </Typography>
                 <IconButton 
-                  onClick={() => handleDelete(city.id)}
+                  onClick={() => handleDelete(city.id || city.name)}
                   size="small"
                   color="error"
                   aria-label="delete city"

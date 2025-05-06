@@ -10,7 +10,17 @@ import CardGrid from "./CardGrid";
 import AuthContainer from "./AuthContainer";
 import "../index.css";
 
-export default function AppLayout({ handleSearch, cities, error, loading, user, onLogin, onLogout }) {
+export default function AppLayout({ handleSearch, cities, setCities, error, loading, user, onLogin, onLogout, setSnackbar }) {
+  // Add a handler for city deletion
+  const handleDeleteCity = (cityId) => {
+    console.log(`Deleting city from state: ${cityId}`);
+    setCities(prevCities => prevCities.filter(city => 
+      city.id !== cityId && 
+      city.name !== cityId && 
+      !city.name.includes(cityId)
+    ));
+  };
+
   return (
     <Box
       sx={{
@@ -42,7 +52,12 @@ export default function AppLayout({ handleSearch, cities, error, loading, user, 
             {loading && <Loading />}
             {cities && !loading && (
               <Grid2 container spacing={2}>
-                <CardGrid cities={cities} />
+                <CardGrid 
+                  cities={cities} 
+                  onDeleteCity={handleDeleteCity}
+                  setCities={setCities}
+                  setSnackbar={setSnackbar}
+                />
               </Grid2>
             )}
           </>

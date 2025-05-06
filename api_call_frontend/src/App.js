@@ -265,7 +265,12 @@ export default function App() {
 
   // Add this function to handle city deletion in UI
   const handleDeleteCity = (cityId) => {
-    setCities(prevCities => prevCities.filter(city => city.id !== cityId));
+    console.log(`Deleting city from state: ${cityId}`);
+    setCities(prevCities => prevCities.filter(city => 
+      city.id !== cityId && 
+      city.name !== cityId && 
+      !city.name.includes(cityId)
+    ));
   };
 
   /**************************************************************************** */
