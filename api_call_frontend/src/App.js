@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Snackbar, Alert } from "@mui/material";
 import { apiCall } from "./utils/fetchData";
 import { createCities } from "./utils/cityFactory";
 import {
@@ -23,7 +24,20 @@ export default function App() {
   const [apiError, setApiError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info"
+  });
   const { callApi } = apiCall();
+
+  // Function to handle closing the snackbar
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar({...snackbar, open: false});
+  };
 
   // Function to check if user is admin
   const isAdmin = (user) => {
@@ -310,6 +324,15 @@ export default function App() {
           } 
         />
       </Routes>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity || "info"}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </BrowserRouter>
   );
 }
