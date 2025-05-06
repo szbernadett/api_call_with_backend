@@ -298,11 +298,13 @@ export default function App() {
               <AppLayout 
                 handleSearch={handleSearch} 
                 cities={cities} 
+                setCities={setCities}
                 error={error} 
                 loading={loading} 
                 user={user} 
                 onLogin={handleLogin}
-                onLogout={handleLogout} 
+                onLogout={handleLogout}
+                setSnackbar={setSnackbar}
               />
             )
           } 

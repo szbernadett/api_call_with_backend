@@ -26,6 +26,8 @@ export default function AppLayout({ handleSearch, cities, setCities, error, load
       });
     } else {
       console.error("setCities is not a function in AppLayout");
+      // As a fallback, reload the page to reflect the changes
+      window.location.reload();
     }
   };
 
@@ -64,7 +66,7 @@ export default function AppLayout({ handleSearch, cities, setCities, error, load
                   cities={cities} 
                   onDeleteCity={handleDeleteCity}
                   setCities={typeof setCities === 'function' ? setCities : null}
-                  setSnackbar={setSnackbar}
+                  setSnackbar={typeof setSnackbar === 'function' ? setSnackbar : null}
                 />
               </Grid2>
             )}
