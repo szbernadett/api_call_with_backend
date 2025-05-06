@@ -14,11 +14,19 @@ export default function AppLayout({ handleSearch, cities, setCities, error, load
   // Add a handler for city deletion
   const handleDeleteCity = (cityId) => {
     console.log(`Deleting city from state: ${cityId}`);
-    setCities(prevCities => prevCities.filter(city => 
-      city.id !== cityId && 
-      city.name !== cityId && 
-      !city.name.includes(cityId)
-    ));
+    // Make sure setCities is a function before using it
+    if (typeof setCities === 'function') {
+      setCities(prevCities => {
+        console.log("Filtering cities in AppLayout:", prevCities.length);
+        return prevCities.filter(city => 
+          city.id !== cityId && 
+          city.name !== cityId && 
+          !city.name.includes(cityId)
+        );
+      });
+    } else {
+      console.error("setCities is not a function in AppLayout");
+    }
   };
 
   return (
@@ -55,7 +63,7 @@ export default function AppLayout({ handleSearch, cities, setCities, error, load
                 <CardGrid 
                   cities={cities} 
                   onDeleteCity={handleDeleteCity}
-                  setCities={setCities}
+                  setCities={typeof setCities === 'function' ? setCities : null}
                   setSnackbar={setSnackbar}
                 />
               </Grid2>

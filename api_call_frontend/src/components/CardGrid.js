@@ -35,9 +35,11 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
         // Update the local state to remove the deleted city
         if (typeof onDeleteCity === 'function') {
           // If parent component provided a handler, use it
+          console.log("Using parent onDeleteCity function");
           onDeleteCity(cityId);
         } else if (setCities) {
           // Otherwise update local state directly
+          console.log("Using local setCities function");
           setCities(prevCities => {
             console.log("Filtering cities:", prevCities.length);
             // Create a new array without the deleted city
@@ -54,6 +56,8 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
               return shouldKeep;
             });
           });
+        } else {
+          console.warn("No method available to update city list after deletion");
         }
         
         // Show success message if we have a snackbar function
