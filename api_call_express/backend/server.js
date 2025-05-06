@@ -11,15 +11,23 @@ const mongoURI = process.env.MONGO_URI;
 let server = express();
 server.use(express.json());
 server.use(cookieParser()); // Add cookie parser
-server.use(cors({
-  origin: true, // Allow all origins temporarily for testing
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow any origin for now to troubleshoot
+    callback(null, true);
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
-}));
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
-// Add a preflight handler for all routes
-server.options('*', cors());
+// Apply CORS middleware
+server.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests
+server.options('*', cors(corsOptions));
 
 mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB connected"))

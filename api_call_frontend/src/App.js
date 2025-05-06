@@ -12,6 +12,11 @@ import AppLayout from "./components/AppLayout";
 import AuthContainer from "./components/AuthContainer";
 import AdminDashboard from "./components/AdminDashboard";
 
+// Use a CORS proxy for development
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://api-call-with-backend.onrender.com'
+  : 'https://cors-anywhere.herokuapp.com/https://api-call-with-backend.onrender.com';
+
 export default function App() {
   const [cities, setCities] = useState(null);
   const [error, setError] = useState(null);
@@ -29,8 +34,8 @@ export default function App() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const response = await fetch("https://api-call-with-backend.onrender.com/auth/status", {
-          credentials: "include"
+        const response = await fetch(`${API_BASE_URL}/auth/status`, {
+          credentials: 'include'
         });
         
         if (response.ok) {
@@ -51,7 +56,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch("https://api-call-with-backend.onrender.com/auth/logout", {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
         credentials: "include"
       });
@@ -81,7 +86,7 @@ export default function App() {
     const encodedCategories = encodeURIComponent(JSON.stringify(selectedCategories));
 
     try {
-      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`, {
+      const response = await fetch(`${API_BASE_URL}/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`, {
         credentials: "include"
       });
       
