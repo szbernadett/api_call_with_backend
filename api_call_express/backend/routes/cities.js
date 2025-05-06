@@ -170,17 +170,36 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
         let attractionsData;
         
         try {
-          // Try to use the cached/queued fetch
-          attractionsData = await cachedFetch(attractionsSearchInfo.url, options, cacheKey);
-        } catch (error) {
-          console.warn("Error with cached fetch:", error);
-          // Fallback to regular axios
+          // Try to use axios directly with response type checking
           const response = await axios.get(attractionsSearchInfo.url, options);
+          
+          // Check if response is HTML instead of JSON
+          const contentType = response.headers['content-type'] || '';
+          if (contentType.includes('text/html')) {
+            console.error('API returned HTML instead of JSON. Possible rate limiting or authentication issue.');
+            throw new Error('API returned HTML instead of JSON');
+          }
+          
           attractionsData = response.data;
+        } catch (error) {
+          console.warn("Error fetching attractions:", error.message);
+          // Initialize with empty array if there was an error
+          attractionsData = [];
         }
         
         // Ensure attractions is an array
-        city.attractions = Array.isArray(attractionsData) ? attractionsData : [];
+        if (!Array.isArray(attractionsData)) {
+          console.warn(`Attractions data is not an array for ${city.name}:`, typeof attractionsData);
+          
+          // Try to extract features if it's in GeoJSON format
+          if (attractionsData && Array.isArray(attractionsData.features)) {
+            attractionsData = attractionsData.features;
+          } else {
+            attractionsData = [];
+          }
+        }
+        
+        city.attractions = attractionsData;
         
         // Log what we got
         console.log(`Got ${city.attractions.length} attractions for ${city.name}`);
@@ -188,9 +207,10 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
         // Populate display attractions
         city.populateAttractionsForDisplay(selectedCategories);
       } catch (error) {
-        console.warn("Error fetching attractions data:", error.message);
+        console.warn("Error in attractions processing:", error.message);
         // Initialize with empty array if there was an error
         city.attractions = [];
+        city.displayAttractions = {};
       }
       return city;
     })
