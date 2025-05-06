@@ -35,16 +35,23 @@ class CityEntity {
 
   // Filter attractions for display based on selected categories
   populateAttractionsForDisplay(selectedCategories) {
+    // Initialize displayAttractions if it doesn't exist
+    this.displayAttractions = this.displayAttractions || {};
+    
     // Ensure attractions is always an array
     if (!Array.isArray(this.attractions)) {
-      console.warn("Attractions is not an array:", this.attractions);
-      this.attractions = Array.isArray(this.attractions?.features) 
-        ? this.attractions.features 
-        : [];
+      console.warn(`Attractions is not an array for ${this.name}:`, typeof this.attractions);
+      
+      // Try to extract features if it's in GeoJSON format
+      if (this.attractions && Array.isArray(this.attractions.features)) {
+        this.attractions = this.attractions.features;
+      } else {
+        this.attractions = [];
+      }
     }
     
-    if (this.attractions.length > 0 && selectedCategories?.length > 0) {
-      console.log("Processing attractions:", this.attractions.length);
+    if (this.attractions.length > 0 && Array.isArray(selectedCategories) && selectedCategories.length > 0) {
+      console.log(`Processing ${this.attractions.length} attractions for ${this.name}`);
       let catsToMatch = [...selectedCategories];
 
       this.attractions.forEach((feature) => {
@@ -99,6 +106,13 @@ const CitySchema = new mongoose.Schema(
 
 // Convert Mongoose City to `CityEntity`
 CitySchema.methods.toCityEntity = function () {
+  // Ensure attractions is an array
+  let attractions = this.attractions;
+  if (!Array.isArray(attractions)) {
+    console.warn(`Attractions is not an array in MongoDB for ${this.name}`);
+    attractions = Array.isArray(attractions?.features) ? attractions.features : [];
+  }
+  
   return new CityEntity(
     this.searchTerm,
     this.name,
@@ -107,7 +121,7 @@ CitySchema.methods.toCityEntity = function () {
     this.latitude,
     this.longitude,
     0, // Default currentTemp
-    this.attractions,
+    attractions, // Use the sanitized attractions
     {}, // Empty displayAttractions, to be populated dynamically
     {} // Empty forecast, to be populated dynamically
   );

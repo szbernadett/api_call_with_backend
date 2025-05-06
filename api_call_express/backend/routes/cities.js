@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const auth = require("../middleware/auth"); // Import auth middleware
 
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
-const createCities = require("../utils/cityFactory");
+const { createCities, ensureAttractionsIsArray } = require("../utils/cityFactory");
 const SearchInfo = require("../models/SearchInfo");
 const { allAttractionCategories } = require("../models/AttractionCategory");
 const { City, CityEntity } = require("../models/City");
@@ -78,23 +78,39 @@ router.get("/search", auth, async (req, res) => {
   const cityName = req.query.cityName;
   const categories = JSON.parse(decodeURIComponent(req.query.categories));
 
-
   try {
     let dbCities = await City.find({ searchTerm: cityName });
     if(dbCities.length > 0){
       console.log("Updating cities fetched from database for search term: ", cityName);
+      
+      // Log the structure of the first city to debug
+      console.log("First city structure:", {
+        name: dbCities[0].name,
+        attractionsType: typeof dbCities[0].attractions,
+        isArray: Array.isArray(dbCities[0].attractions),
+        attractionsLength: dbCities[0].attractions ? dbCities[0].attractions.length : 'N/A'
+      });
+      
       const existingCities = dbCities.map(city => {
         const cityEntity = city.toCityEntity();
-        return cityEntity;
+        return ensureAttractionsIsArray(cityEntity);
       });
-      const citeisWithUpdatedTemperature = await fetchCitiesWithTemperature(existingCities);
-      const citiesWithUpdatedForecast = await fetchCitiesWithForecast(citeisWithUpdatedTemperature);
+      
+      const citiesWithUpdatedTemperature = await fetchCitiesWithTemperature(existingCities);
+      const citiesWithUpdatedForecast = await fetchCitiesWithForecast(citiesWithUpdatedTemperature);
+      
       const citiesWithFilteredAttractions = citiesWithUpdatedForecast.map(city => {
+        // Ensure attractions is an array before calling populateAttractionsForDisplay
+        if (!Array.isArray(city.attractions)) {
+          console.warn(`Attractions is not an array for ${city.name} before populateAttractionsForDisplay`);
+          city.attractions = [];
+        }
+        
         city.populateAttractionsForDisplay(categories);
         return city;
       });
+      
       res.json({cities: citiesWithFilteredAttractions});
-    
     } else {
       console.log("Creating new city entities from API data for search term: ", cityName);
       const citySearchInfo = getCitySearchInfo(cityName);
@@ -114,15 +130,24 @@ router.get("/search", auth, async (req, res) => {
       
       
       await City.insertMany(
-        citiesWithForecast.map(city => ({
-          searchTerm: city.searchTerm,
-          name: city.name,
-          countryName: city.countryName,
-          population: city.population,
-          latitude: city.latitude,
-          longitude: city.longitude,
-          attractions: city.attractions
-        }))
+        citiesWithForecast.map(city => {
+          // Ensure attractions is serializable
+          let attractions = city.attractions;
+          if (!Array.isArray(attractions)) {
+            console.warn(`Attractions is not an array when saving ${city.name}`);
+            attractions = Array.isArray(attractions?.features) ? attractions.features : [];
+          }
+          
+          return {
+            searchTerm: city.searchTerm,
+            name: city.name,
+            countryName: city.countryName,
+            population: city.population,
+            latitude: city.latitude,
+            longitude: city.longitude,
+            attractions: attractions // Use the sanitized attractions
+          };
+        })
       );
   
       res.json({ cities: citiesWithForecast });
