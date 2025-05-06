@@ -339,46 +339,83 @@ function getUniqueCities(cities) {
   return Array.from(new Map(cities.map((city) => [city.id, city])).values());
 }
 
-// Update the delete route to handle city deletion by name or ID
+// Update the delete route to handle city deletion more precisely
 router.delete("/:id", auth, async (req, res) => {
   const cityId = req.params.id;
   
   try {
     console.log(`Attempting to delete city with ID: ${cityId}`);
     
-    // Try to find by exact ID or name match first
-    let city = await City.findOne({ 
-      $or: [
-        { _id: mongoose.isValidObjectId(cityId) ? cityId : null },
-        { name: cityId },
-        { id: cityId }  // Try matching against the computed id (name+latitude)
-      ]
-    });
+    // First, try to find the exact city by name, ID, or computed ID
+    let city = null;
     
-    // If not found, try partial name match
+    // If it looks like a MongoDB ObjectId, try that first
+    if (mongoose.isValidObjectId(cityId)) {
+      city = await City.findById(cityId);
+      if (city) {
+        console.log(`Found city by ObjectId: ${city.name}`);
+      }
+    }
+    
+    // If not found by ObjectId, try exact name match
     if (!city) {
-      console.log(`City not found with exact match, trying partial name match for: ${cityId}`);
-      
-      // Try to find by name containing the ID (for district names)
-      city = await City.findOne({
+      city = await City.findOne({ name: cityId });
+      if (city) {
+        console.log(`Found city by exact name: ${city.name}`);
+      }
+    }
+    
+    // If still not found, try case-insensitive exact match
+    if (!city) {
+      city = await City.findOne({ 
+        name: { $regex: `^${cityId}$`, $options: 'i' }
+      });
+      if (city) {
+        console.log(`Found city by case-insensitive name: ${city.name}`);
+      }
+    }
+    
+    // If still not found, check if we're trying to delete a district
+    if (!city && cityId.includes('District')) {
+      // For "X District", try to find exact match
+      city = await City.findOne({ 
+        name: { $regex: `^${cityId}$`, $options: 'i' }
+      });
+      if (city) {
+        console.log(`Found district by exact name: ${city.name}`);
+      }
+    }
+    
+    // If still not found, try partial match as last resort
+    if (!city) {
+      const cities = await City.find({ 
         name: { $regex: cityId, $options: 'i' }
       });
       
-      // If still not found, try with the first part of the name (before comma or "District")
-      if (!city && (cityId.includes(',') || cityId.includes('District'))) {
-        const simplifiedName = cityId.split(' District')[0].split(',')[0].trim();
-        console.log(`Trying with simplified name: ${simplifiedName}`);
+      if (cities.length > 0) {
+        // If multiple matches, prefer exact match or district match
+        const exactMatch = cities.find(c => 
+          c.name.toLowerCase() === cityId.toLowerCase() ||
+          (cityId.includes('District') && c.name.toLowerCase() === cityId.toLowerCase())
+        );
         
-        city = await City.findOne({
-          name: { $regex: `^${simplifiedName}`, $options: 'i' }
-        });
-      }
-      
-      if (!city) {
-        console.log(`City not found with ID: ${cityId}`);
-        return res.status(404).json({ message: "City not found" });
+        if (exactMatch) {
+          city = exactMatch;
+          console.log(`Found city by partial match (exact): ${city.name}`);
+        } else {
+          // If no exact match, take the first one
+          city = cities[0];
+          console.log(`Found city by partial match (first): ${city.name}`);
+        }
       }
     }
+    
+    if (!city) {
+      console.log(`City not found with ID: ${cityId}`);
+      return res.status(404).json({ message: "City not found" });
+    }
+    
+    console.log(`Deleting city: ${city.name} (${city._id})`);
     
     // Delete the city
     const result = await City.deleteOne({ _id: city._id });

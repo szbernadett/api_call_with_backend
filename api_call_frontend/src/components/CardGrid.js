@@ -6,47 +6,33 @@ import ForecastChart from "./ForecastChart";
 export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar }) {
   console.log(cities);
   
-  const handleDelete = async (cityId) => {
+  const handleDelete = async (city) => {
     try {
-      console.log(`Attempting to delete city with ID: ${cityId}`);
+      // Use the full city object for more precise deletion
+      console.log(`Attempting to delete city: ${city.name} (ID: ${city.id})`);
       
-      // Try to delete by ID first
-      let response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(cityId)}`, {
+      // For district names, use the exact full name
+      const deleteTarget = city.name;
+      
+      let response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(deleteTarget)}`, {
         method: "DELETE",
         credentials: "include"
       });
       
-      // If that fails, try to delete by name
-      if (!response.ok && response.status === 404) {
-        console.log(`City not found with ID, trying to delete by name`);
-        
-        // Extract just the city name without district if possible
-        const cityName = cityId.split(' District')[0].split(',')[0];
-        
-        response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(cityName)}`, {
-          method: "DELETE",
-          credentials: "include"
-        });
-      }
-      
       if (response.ok) {
-        console.log(`Successfully deleted city: ${cityId}`);
+        console.log(`Successfully deleted city: ${city.name}`);
         
         // Update the UI to remove the deleted city
         if (typeof onDeleteCity === 'function') {
           // If parent component provided a handler, use it
           console.log("Using parent onDeleteCity function");
-          onDeleteCity(cityId);
+          onDeleteCity(city.id);
         } else if (typeof setCities === 'function') {
           // Otherwise update cities state directly
           console.log("Using setCities function");
           setCities(prevCities => {
             console.log("Filtering cities:", prevCities.length);
-            return prevCities.filter(city => 
-              city.id !== cityId && 
-              city.name !== cityId && 
-              !city.name.includes(cityId)
-            );
+            return prevCities.filter(c => c.id !== city.id);
           });
         } else {
           console.warn("No method available to update city list after deletion");
@@ -58,7 +44,7 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
         if (typeof setSnackbar === 'function') {
           setSnackbar({
             open: true,
-            message: `City deleted successfully`,
+            message: `City ${city.name} deleted successfully`,
             severity: "success"
           });
         }
@@ -119,7 +105,7 @@ export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar 
                   {city.name}
                 </Typography>
                 <IconButton 
-                  onClick={() => handleDelete(city.id || city.name)}
+                  onClick={() => handleDelete(city)}
                   size="small"
                   color="error"
                   aria-label="delete city"
