@@ -9,6 +9,69 @@ const SearchInfo = require("../models/SearchInfo");
 const { allAttractionCategories } = require("../models/AttractionCategory");
 const { City, CityEntity } = require("../models/City");
 
+// Add rate limiting and retry logic to API calls
+const fetchWithRetry = async (url, options = {}, maxRetries = 3, delay = 1000) => {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      // Add a small delay between retries, increasing with each attempt
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, delay * attempt));
+      }
+      
+      const response = await fetch(url, options);
+      
+      if (response.status === 429) {
+        console.log(`Rate limited on attempt ${attempt + 1}, waiting before retry...`);
+        // Get retry-after header if available
+        const retryAfter = response.headers.get('retry-after');
+        const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : delay * 2;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Attempt ${attempt + 1} failed:`, error);
+      lastError = error;
+    }
+  }
+  
+  throw lastError || new Error('All retry attempts failed');
+};
+
+// Add caching to reduce API calls
+const NodeCache = require('node-cache');
+const apiCache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
+
+// Cached API fetch function
+const cachedFetch = async (url, options = {}, cacheKey = url) => {
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData) {
+    console.log(`Using cached data for: ${cacheKey}`);
+    return cachedData;
+  }
+  
+  // If not in cache, fetch from API with retry logic
+  const data = await fetchWithRetry(url, options);
+  
+  // Store in cache
+  apiCache.set(cacheKey, data);
+  
+  return data;
+};
+
+// Add detailed logging for API calls
+const logApiCall = (endpoint, status, message) => {
+  console.log(`[API] ${new Date().toISOString()} | ${endpoint} | Status: ${status} | ${message}`);
+};
+
 // Protect the search route with auth middleware
 router.get("/search", auth, async (req, res) => { 
   const cityName = req.query.cityName;
