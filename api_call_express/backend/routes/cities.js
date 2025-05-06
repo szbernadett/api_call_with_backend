@@ -339,27 +339,56 @@ function getUniqueCities(cities) {
   return Array.from(new Map(cities.map((city) => [city.id, city])).values());
 }
 
-// Add this new route for deleting a city
+// Update the delete route to handle city deletion by name or ID
 router.delete("/:id", auth, async (req, res) => {
   const cityId = req.params.id;
   
   try {
-    // Find the city by ID
-    const city = await City.findOne({ 
+    console.log(`Attempting to delete city with ID: ${cityId}`);
+    
+    // Try to find by exact ID or name match first
+    let city = await City.findOne({ 
       $or: [
         { _id: mongoose.isValidObjectId(cityId) ? cityId : null },
-        { "name": cityId }
+        { name: cityId },
+        { id: cityId }  // Try matching against the computed id (name+latitude)
       ]
     });
     
+    // If not found, try partial name match
     if (!city) {
-      return res.status(404).json({ message: "City not found" });
+      console.log(`City not found with exact match, trying partial name match for: ${cityId}`);
+      
+      // Try to find by name containing the ID (for district names)
+      city = await City.findOne({
+        name: { $regex: cityId, $options: 'i' }
+      });
+      
+      // If still not found, try with the first part of the name (before comma or "District")
+      if (!city && (cityId.includes(',') || cityId.includes('District'))) {
+        const simplifiedName = cityId.split(' District')[0].split(',')[0].trim();
+        console.log(`Trying with simplified name: ${simplifiedName}`);
+        
+        city = await City.findOne({
+          name: { $regex: `^${simplifiedName}`, $options: 'i' }
+        });
+      }
+      
+      if (!city) {
+        console.log(`City not found with ID: ${cityId}`);
+        return res.status(404).json({ message: "City not found" });
+      }
     }
     
     // Delete the city
-    await City.deleteOne({ _id: city._id });
+    const result = await City.deleteOne({ _id: city._id });
     
-    res.json({ message: "City deleted successfully" });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "City not found or already deleted" });
+    }
+    
+    console.log(`Successfully deleted city: ${city.name}`);
+    res.json({ message: "City deleted successfully", deletedCity: city.name });
   } catch (error) {
     console.error("Error deleting city:", error);
     res.status(500).json({ error: error.message });

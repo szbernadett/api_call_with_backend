@@ -3,24 +3,76 @@ import { Card, CardContent, Typography, Grid2, IconButton, Box } from "@mui/mate
 import DeleteIcon from "@mui/icons-material/Delete";
 import ForecastChart from "./ForecastChart";
 
-export default function CardGrid({ cities, onDeleteCity }) {
+export default function CardGrid({ cities, onDeleteCity, setCities, setSnackbar }) {
   console.log(cities);
   
   const handleDelete = async (cityId) => {
     try {
-      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/${cityId}`, {
+      console.log(`Attempting to delete city with ID: ${cityId}`);
+      
+      // Try to delete by ID first
+      let response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(cityId)}`, {
         method: "DELETE",
         credentials: "include"
       });
       
+      // If that fails, try to delete by name
+      if (!response.ok && response.status === 404) {
+        console.log(`City not found with ID, trying to delete by name`);
+        
+        // Extract just the city name without district if possible
+        const cityName = cityId.split(' District')[0].split(',')[0];
+        
+        response = await fetch(`https://api-call-with-backend.onrender.com/cities/${encodeURIComponent(cityName)}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+      }
+      
       if (response.ok) {
-        // Call the parent component's handler to update UI
-        onDeleteCity(cityId);
+        console.log(`Successfully deleted city: ${cityId}`);
+        
+        // Update the local state to remove the deleted city
+        if (typeof onDeleteCity === 'function') {
+          // If parent component provided a handler, use it
+          onDeleteCity(cityId);
+        } else {
+          // Otherwise update local state directly if available
+          setCities && setCities(prevCities => 
+            prevCities.filter(city => 
+              city.id !== cityId && 
+              city.name !== cityId && 
+              !city.name.includes(cityId)
+            )
+          );
+        }
+        
+        // Show success message if we have a snackbar function
+        setSnackbar && setSnackbar({
+          open: true,
+          message: `City deleted successfully`,
+          severity: "success"
+        });
       } else {
-        console.error("Failed to delete city");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to delete city:", errorData.message || response.statusText);
+        
+        // Show error message if we have a snackbar function
+        setSnackbar && setSnackbar({
+          open: true,
+          message: `Failed to delete city: ${errorData.message || response.statusText}`,
+          severity: "error"
+        });
       }
     } catch (error) {
       console.error("Error deleting city:", error);
+      
+      // Show error message if we have a snackbar function
+      setSnackbar && setSnackbar({
+        open: true,
+        message: `Error deleting city: ${error.message}`,
+        severity: "error"
+      });
     }
   };
   
