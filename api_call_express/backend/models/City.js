@@ -2,6 +2,12 @@ const { ReverseAttractionCategory } = require("./AttractionCategory");
 const { allAttractionCategories } = require("./AttractionCategory");
 const mongoose = require("mongoose");
 
+// Add a constant for the special marker object
+const FETCH_FAILED_MARKER = {
+  _fetchFailed: true,
+  message: "Failed to fetch attractions. Will retry on next search."
+};
+
 // Traditional JavaScript Class for Dynamic Processing
 class CityEntity {
   static attractionPerCatLimit = 5;
@@ -31,6 +37,21 @@ class CityEntity {
     this.displayAttractions = displayAttractions;
     this.forecast = forecast;
     this.id = name + latitude; // Unique ID for frontend
+  }
+
+  // Check if attractions has the fetch failed marker
+  shouldRefetchAttractions() {
+    return Array.isArray(this.attractions) && 
+           this.attractions.length === 1 && 
+           this.attractions[0]?._fetchFailed === true;
+  }
+
+  // Get user-friendly message if fetch failed
+  getAttractionsErrorMessage() {
+    if (this.shouldRefetchAttractions()) {
+      return this.attractions[0]?.message || "No attractions available";
+    }
+    return null;
   }
 
   // Filter attractions for display based on selected categories
@@ -139,4 +160,4 @@ CitySchema.set("toObject", { virtuals: true });
 
 const City = mongoose.model("City", CitySchema);
 
-module.exports = { City, CityEntity };
+module.exports = { City, CityEntity, FETCH_FAILED_MARKER };

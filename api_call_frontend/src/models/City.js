@@ -30,6 +30,14 @@ const { allAttractionCategories } = require("./AttractionCategory");
   }
   // Collects the first 5 attraction names for each selected category
   populateAttractionsForDisplay(selectedCategories) {
+    // If attractions has the fetch failed marker, don't try to populate
+    if (this.hasAttractionsError()) {
+      this.displayAttractions = { 
+        Error: [this.getAttractionsErrorMessage()] 
+      };
+      return;
+    }
+
     if (this.attractions.length > 0 && selectedCategories?.length > 0) {
       let catsToMatch = [...selectedCategories];
       // tested on GeoJSON format returned from the Placed API
@@ -65,5 +73,20 @@ const { allAttractionCategories } = require("./AttractionCategory");
       date: fDay.date, // The date in format yyyy-mm-dd
       avgTemp: fDay.day.avgtemp_c, // The average temperature
     }));
+  }
+
+  // Check if attractions has the fetch failed marker
+  hasAttractionsError() {
+    return Array.isArray(this.attractions) && 
+           this.attractions.length === 1 && 
+           this.attractions[0]?._fetchFailed === true;
+  }
+
+  // Get user-friendly message if fetch failed
+  getAttractionsErrorMessage() {
+    if (this.hasAttractionsError()) {
+      return this.attractions[0]?.message || "No attractions available";
+    }
+    return null;
   }
 }

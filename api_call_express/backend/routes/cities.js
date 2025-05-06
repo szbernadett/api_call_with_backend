@@ -8,7 +8,7 @@ const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, ge
 const { createCities, ensureAttractionsIsArray } = require("../utils/cityFactory");
 const SearchInfo = require("../models/SearchInfo");
 const { allAttractionCategories } = require("../models/AttractionCategory");
-const { City, CityEntity } = require("../models/City");
+const { City, CityEntity, FETCH_FAILED_MARKER } = require("../models/City");
 
 // Add rate limiting and retry logic to API calls
 const fetchWithRetry = async (url, options = {}, maxRetries = 3, delay = 1000) => {
@@ -88,16 +88,55 @@ router.get("/search", auth, async (req, res) => {
         name: dbCities[0].name,
         attractionsType: typeof dbCities[0].attractions,
         isArray: Array.isArray(dbCities[0].attractions),
-        attractionsLength: dbCities[0].attractions ? dbCities[0].attractions.length : 'N/A'
+        attractionsLength: dbCities[0].attractions ? 
+          (typeof dbCities[0].attractions === 'string' ? 
+            dbCities[0].attractions.length : 
+            (Array.isArray(dbCities[0].attractions) ? 
+              dbCities[0].attractions.length : 'N/A')) : 'N/A'
       });
       
       const existingCities = dbCities.map(city => {
+        // Fix attractions before creating CityEntity
+        if (typeof city.attractions === 'string') {
+          try {
+            city.attractions = JSON.parse(city.attractions);
+          } catch (e) {
+            console.warn(`Failed to parse attractions string for ${city.name}`);
+            city.attractions = [];
+          }
+        }
+        
         const cityEntity = city.toCityEntity();
         return ensureAttractionsIsArray(cityEntity);
       });
       
       const citiesWithUpdatedTemperature = await fetchCitiesWithTemperature(existingCities);
-      const citiesWithUpdatedForecast = await fetchCitiesWithForecast(citiesWithUpdatedTemperature);
+      
+      // Check if any cities need to refetch attractions
+      const citiesNeedingAttractions = citiesWithUpdatedTemperature.filter(city => 
+        city.shouldRefetchAttractions && city.shouldRefetchAttractions()
+      );
+      
+      let citiesWithUpdatedAttractions = citiesWithUpdatedTemperature;
+      if (citiesNeedingAttractions.length > 0) {
+        console.log(`Refetching attractions for ${citiesNeedingAttractions.length} cities`);
+        citiesWithUpdatedAttractions = await fetchCitiesWithAttractions(
+          citiesWithUpdatedTemperature, 
+          categories
+        );
+        
+        // Update the database with new attractions data
+        for (const city of citiesWithUpdatedAttractions) {
+          if (!city.shouldRefetchAttractions || !city.shouldRefetchAttractions()) {
+            await City.updateOne(
+              { name: city.name, latitude: city.latitude },
+              { attractions: city.attractions }
+            );
+          }
+        }
+      }
+      
+      const citiesWithUpdatedForecast = await fetchCitiesWithForecast(citiesWithUpdatedAttractions);
       
       const citiesWithFilteredAttractions = citiesWithUpdatedForecast.map(city => {
         // Ensure attractions is an array before calling populateAttractionsForDisplay
@@ -106,7 +145,11 @@ router.get("/search", auth, async (req, res) => {
           city.attractions = [];
         }
         
-        city.populateAttractionsForDisplay(categories);
+        // Skip populateAttractionsForDisplay if attractions has the fetch failed marker
+        if (!city.shouldRefetchAttractions || !city.shouldRefetchAttractions()) {
+          city.populateAttractionsForDisplay(categories);
+        }
+        
         return city;
       });
       
@@ -185,6 +228,21 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
   return Promise.all(
     cities.map(async (city) => {
       try {
+        // Check if we should refetch attractions
+        const shouldRefetch = city.shouldRefetchAttractions ? 
+                             city.shouldRefetchAttractions() : false;
+        
+        // If attractions exist and are valid, and we don't need to refetch, skip API call
+        if (Array.isArray(city.attractions) && 
+            city.attractions.length > 0 && 
+            !city.attractions[0]?._fetchFailed && 
+            !shouldRefetch) {
+          console.log(`Using existing attractions for ${city.name}`);
+          city.populateAttractionsForDisplay(selectedCategories);
+          return city;
+        }
+        
+        console.log(`Fetching attractions for ${city.name}`);
         const attractionsSearchInfo = getAttractionSearchInfo(city.latitude, city.longitude, allAttractionCategories);
         const options = {
           headers: attractionsSearchInfo.headers
@@ -205,11 +263,24 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
             throw new Error('API returned HTML instead of JSON');
           }
           
+          // Check if response data is a string and looks like HTML
+          if (typeof response.data === 'string' && 
+              (response.data.trim().toLowerCase().startsWith('<!doctype') || 
+               response.data.trim().toLowerCase().startsWith('<html'))) {
+            console.error('API returned HTML content. Possible rate limiting or authentication issue.');
+            throw new Error('API returned HTML content');
+          }
+          
           attractionsData = response.data;
         } catch (error) {
           console.warn("Error fetching attractions:", error.message);
-          // Initialize with empty array if there was an error
-          attractionsData = [];
+          // Use the special marker to indicate fetch failure
+          city.attractions = [{ 
+            ...FETCH_FAILED_MARKER,
+            message: `Could not load attractions: ${error.message}`
+          }];
+          city.displayAttractions = {};
+          return city;
         }
         
         // Ensure attractions is an array
@@ -220,6 +291,7 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
           if (attractionsData && Array.isArray(attractionsData.features)) {
             attractionsData = attractionsData.features;
           } else {
+            // If we can't get a valid array, use an empty array (successful fetch but no results)
             attractionsData = [];
           }
         }
@@ -233,8 +305,11 @@ const fetchCitiesWithAttractions = async (cities, selectedCategories) => {
         city.populateAttractionsForDisplay(selectedCategories);
       } catch (error) {
         console.warn("Error in attractions processing:", error.message);
-        // Initialize with empty array if there was an error
-        city.attractions = [];
+        // Use the special marker to indicate fetch failure
+        city.attractions = [{ 
+          ...FETCH_FAILED_MARKER,
+          message: `Could not process attractions: ${error.message}`
+        }];
         city.displayAttractions = {};
       }
       return city;
