@@ -70,10 +70,10 @@ export default function App() {
     setApiError(null);
     setLoading(true);
     const normalisedCity = city.toLowerCase();
-    const cachedResult = getCachedData(normalisedCity, selectedCategories);
 
     if (!normalisedCity) {
       alert("Please enter a city name");
+      setLoading(false);
       return;
     }
 
@@ -81,19 +81,30 @@ export default function App() {
     const encodedCategories = encodeURIComponent(JSON.stringify(selectedCategories));
 
     try {
-      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(response.error);
+      const response = await fetch(`https://api-call-with-backend.onrender.com/cities/search?cityName=${encodedCityName}&categories=${encodedCategories}`, {
+        credentials: "include"
+      });
+      
+      if (response.status === 401) {
+        // If unauthorized, try to redirect to login
+        setError("Please log in to search for cities");
+        setUser(null); // Clear user state to show login form
         setLoading(false);
         return;
       }
-
-      setCities(result["cities"]);
-      setError(null);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Search failed" }));
+        setError(errorData.message || "Search failed");
+        setLoading(false);
+        return;
+      }
+      
+      const result = await response.json();
+      setCities(result.cities || []);
     } catch (err) {
-      setError(err.message);
+      console.error("Search error:", err);
+      setError("Network error. Please try again later.");
     } finally {
       setLoading(false);
     }
