@@ -1,6 +1,7 @@
 let express = require("express");
 let router = express.Router();
 let axios = require("axios");
+const mongoose = require("mongoose");
 const auth = require("../middleware/auth"); // Import auth middleware
 
 const { getCitySearchInfo, getCurrentTempSearchInfo, getAttractionSearchInfo, getForecastSearchInfo } = require("../utils/searchInfoFactory");
