@@ -134,15 +134,20 @@ router.get("/status", async (req, res) => {
 
 // Logout route
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
-  });
-  
-  res.json({ 
-    message: "Logged out successfully" 
-  });
+  try {
+    // Clear the token cookie
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 0 // Expire immediately
+    });
+    
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    res.status(500).json({ message: "Error logging out" });
+  }
 });
 
 module.exports = router;

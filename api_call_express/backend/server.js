@@ -12,9 +12,10 @@ let server = express();
 server.use(express.json());
 server.use(cookieParser()); // Add cookie parser
 server.use(cors({
-  origin: "https://api-call-with-backend.vercel.app", // Allow frontend
-  methods: ["GET", "POST", "PUT", "DELETE"], // Allow these methods
+  origin: ["https://api-call-with-backend.vercel.app", "http://localhost:3000"], // Allow both production and local frontend
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Include OPTIONS for preflight requests
   credentials: true, // Important for cookies
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow these headers
 }));
 
 mongoose.connect(mongoURI)
