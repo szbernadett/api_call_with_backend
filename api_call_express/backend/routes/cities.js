@@ -174,7 +174,7 @@ router.get("/search", auth, async (req, res) => {
       
       await City.insertMany(
         citiesWithForecast.map(city => {
-          // Ensure attractions is serializable
+          // Ensure attractions is serialisable
           let attractions = city.attractions;
           if (!Array.isArray(attractions)) {
             console.warn(`Attractions is not an array when saving ${city.name}`);
@@ -188,7 +188,7 @@ router.get("/search", auth, async (req, res) => {
             population: city.population,
             latitude: city.latitude,
             longitude: city.longitude,
-            attractions: attractions // Use the sanitized attractions
+            attractions: attractions // Use the sanitised attractions
           };
         })
       );

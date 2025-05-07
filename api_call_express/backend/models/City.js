@@ -56,7 +56,7 @@ class CityEntity {
 
   // Filter attractions for display based on selected categories
   populateAttractionsForDisplay(selectedCategories) {
-    // Initialize displayAttractions if it doesn't exist
+    // Initialise displayAttractions if it doesn't exist
     this.displayAttractions = this.displayAttractions || {};
     
     // Ensure attractions is always an array
@@ -142,7 +142,7 @@ CitySchema.methods.toCityEntity = function () {
     this.latitude,
     this.longitude,
     0, // Default currentTemp
-    attractions, // Use the sanitized attractions
+    attractions, // Use the sanitised attractions
     {}, // Empty displayAttractions, to be populated dynamically
     {} // Empty forecast, to be populated dynamically
   );

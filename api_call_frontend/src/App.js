@@ -105,7 +105,7 @@ export default function App() {
       });
       
       if (response.status === 401) {
-        // If unauthorized, try to redirect to login
+        // If unauthorisssed, try to redirect to login
         setError("Please log in to search for cities");
         setUser(null); // Clear user state to show login form
         setLoading(false);
