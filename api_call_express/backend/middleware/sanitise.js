@@ -4,7 +4,7 @@ const xss = require('xss');
  * Middleware to sanitise request body, params, and query
  * to prevent XSS attacks
  */
-const sanitizeMiddleware = (req, res, next) => {
+const sanitiseMiddleware = (req, res, next) => {
   // Sanitise request body
   if (req.body) {
     Object.keys(req.body).forEach(key => {
@@ -35,4 +35,4 @@ const sanitizeMiddleware = (req, res, next) => {
   next();
 };
 
-module.exports = sanitizeMiddleware;
+module.exports = sanitiseMiddleware;

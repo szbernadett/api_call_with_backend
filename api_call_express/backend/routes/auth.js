@@ -44,13 +44,13 @@ router.post("/signup", [
 
     const { username, email, password } = req.body;
 
-    // Sanitize inputs
+    // Sanitise inputs
     const sanitisedUsername = xss(username);
     const sanitisedEmail = xss(email);
 
     // Check if user already exists
     const existingUser = await User.findOne({ 
-      $or: [{ username: sanitizedUsername }, { email: sanitisedEmail }] 
+      $or: [{ username: sanitisedUsername }, { email: sanitisedEmail }] 
     });
     
     if (existingUser) {
@@ -59,7 +59,7 @@ router.post("/signup", [
       });
     }
 
-    // Create new user with sanitized inputs
+    // Create new user with sanitised inputs
     const newUser = new User({ 
       username: sanitisedUsername, 
       email: sanitisedEmail, 
@@ -96,7 +96,7 @@ router.post("/login", [
 
     const { username, password } = req.body;
 
-    // Sanitize inputs
+    // Sanitise inputs
     const sanitisedUsername = xss(username);
 
     // Find user

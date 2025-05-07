@@ -7,14 +7,14 @@ const cookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 5000;
 const mongoose = require("mongoose");
 const mongoURI = process.env.MONGO_URI;
-const sanitizeMiddleware = require('./middleware/sanitise');
+const sanitiseMiddleware = require('./middleware/sanitise');
 
 let server = express();
 server.use(express.json());
 server.use(cookieParser()); // Add cookie parser
 
 // Apply sanitisation middleware globally
-server.use(sanitizeMiddleware);
+server.use(sanitiseMiddleware);
 
 const corsOptions = {
   origin: function (origin, callback) {
